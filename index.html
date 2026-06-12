@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>JA1 Court Manager</title>
-    <script src="vendor/tailwind.min.js"></script>
-    <script src="vendor/dexie.js"></script>
-    <link href="vendor/all.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/dexie/dist/dexie.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght=400;600;700;800&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; transition: background-color 0.3s ease, color 0.3s ease; }
@@ -33,40 +33,28 @@
             <div>
                 <h4 class="text-emerald-500 font-bold uppercase text-[10px] mb-2 tracking-widest">1. Matchmaking Modes</h4>
                 <div class="space-y-2">
-                    <p>• <b>Default (FIFO)</b>: Strictly follows arrival order (longest wait first). Ensures newcomers (0 games) play first and strictly avoids immediate 4-player repeat lineups by swapping players if needed.</p>
-                    <p>• <b>FairQ ON</b>: Matches players based on skill level. It takes the longest-waiting player (Anchor) and finds 3 others in the queue with the closest skill ratings.</p>
                     <p>• <b>GMT ON</b>: Prioritizes competitive matchups. Pairs Top 1 & 2 vs Top 3 & 4.</p>
-                    <p>• <b>RT ON</b>: Uses skill levels defined by dots. Pairs Advance with Beginner vs Advance with Beginner (Rank 1 & 4 vs Rank 2 & 3).</p>
+                    <p>• <b>RT ON</b>: Uses skill levels defined by dots:</p>
                     <p class="ml-4">• 1 Dot: Beginner (2.0)</p>
-                    <p class="ml-4">• 2 Dots: Novice (3.0)</p>
-                    <p class="ml-4">• 3 Dots: Intermediate (3.5)</p>
-                    <p class="ml-4">• 4 Dots: Advanced (4.5)</p>
+                    <p class="ml-4">• 2 Dots: Beginning Novice (2.5)</p>
+                    <p class="ml-4">• 3 Dots: Novice (3.0)</p>
+                    <p class="ml-4">• 4 Dots: Intermediate (3.5)</p>
+                    <p class="ml-4">• 5 Dots: Advanced Intermediate (4.0)</p>
+                    <p class="ml-4">• 6 Dots: Advanced (4.5)</p>
+                    <p>• <b>FairQ</b>: Rotates players based on wait time and least games played.</p>
                 </div>
             </div>
             <div>
-                <h4 class="text-emerald-500 font-bold uppercase text-[10px] mb-2 tracking-widest">2. Player Management</h4>
-                <div class="space-y-3">
-                    <p>• <b>Profiles</b>: Tap any player in the roster to view all-time vs session stats, change photos, or update skill ratings.</p>
-                    <p>• <b>Idle Mode</b>: Tap the <i class="fas fa-coffee mx-1 text-amber-500"></i> icon to pause a player's wait time without checking them out. Perfect for breaks.</p>
-                    <p>• <b>Check-In</b>: New players are added via the top bar. You can search the Global DB to pull existing players into a new session.</p>
+                <h4 class="text-emerald-500 font-bold uppercase text-[10px] mb-2 tracking-widest">2. Player Profiles</h4>
+                <div class="space-y-2">
+                    <p>• <b>Edit Profile</b>: Tap any player in the roster to change their photo or rating.</p>
+                    <p>• <b>All-Time Stats</b>: View global records in the Global Stats tab.</p>
                 </div>
             </div>
-
             <div>
-                <h4 class="text-emerald-500 font-bold uppercase text-[10px] mb-2 tracking-widest">3. Court Operations</h4>
-                <div class="space-y-3">
-                    <p>• <b>Staging</b>: Matches are first created in the "Up Next Deck". This allows you to review and <b>Shuffle</b> or <b>Edit</b> lineups before they go live.</p>
-                    <p>• <b>Auto-Fill</b>: By default, you must explicitly confirm a staged match to a court. Toggle "Locked/Unlocked" to manage staging capacity.</p>
-                    <p>• <b>Live Edits</b>: Need to swap a player mid-game? Use "Change / Auto Replace" on any occupied court.</p>
-                </div>
-            </div>
-
-            <div>
-                <h4 class="text-emerald-500 font-bold uppercase text-[10px] mb-2 tracking-widest">4. Session & Data</h4>
-                <div class="space-y-3">
-                    <p>• <b>Export</b>: "Export Summary" generates a professional CSV or PDF containing leaderboards, wait time analysis, and full match logs.</p>
-                    <p>• <b>Reset</b>: Use "RESET SYSTEM" only at the end of a major event. It clears local session data but preserves the Global Player Database.</p>
-                    <p>• <b>Sync</b>: The app works 100% offline. Data syncs to the global cloud automatically when a connection is detected.</p>
+                <h4 class="text-emerald-500 font-bold uppercase text-[10px] mb-2 tracking-widest">3. Offline Support</h4>
+                <div class="space-y-2">
+                    <p>• This app works completely offline. Your data is stored on this device.</p>
                 </div>
             </div>
         </div>
@@ -84,15 +72,17 @@
         <div class="bg-slate-800/50 p-4 border-b border-slate-700 flex flex-col sm:flex-row justify-between items-center gap-4">
             <div class="flex gap-6 text-sm">
                 <button onclick="setStatsTab('leaderboard')" id="tab-leaderboard" class="stats-tab-active py-1">Leaderboard</button>
-                <button onclick="setStatsTab('awards')" id="tab-awards" class="stats-tab-inactive py-1">Awards</button>
+                <button onclick="setStatsTab('ranking')" id="tab-ranking" class="stats-tab-inactive py-1">Ranking</button>
             </div>
             <div class="flex items-center gap-2">
                 <label class="text-[10px] uppercase font-bold text-slate-500">Filter Skill:</label>
                 <select id="stats-skill-filter" onchange="renderGlobalStatsTable()" class="bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-xs text-white outline-none">
                     <option value="all">All Levels</option>
                     <option value="2.0">Beginner</option>
+                    <option value="2.5">Beginning Novice</option>
                     <option value="3.0">Novice</option>
                     <option value="3.5">Intermediate</option>
+                    <option value="4.0">Advanced Intermediate</option>
                     <option value="4.5">Advanced</option>
                 </select>
             </div>
@@ -118,28 +108,6 @@
     </div>
 </div>
 
-<div id="recent-players-modal" class="fixed inset-0 z-[130] hidden flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4">
-    <div class="bg-slate-900 border border-slate-700 rounded-3xl max-w-md w-full shadow-2xl overflow-hidden flex flex-col max-h-[80vh]">
-        <div class="p-6 border-b border-slate-800 flex justify-between items-center text-center relative">
-            <h3 class="text-xl font-bold text-white w-full">Quick Add Recent Players</h3>
-            <button onclick="closeRecentPlayers()" class="text-slate-400 hover:text-white absolute right-6 transition"><i class="fas fa-times text-xl"></i></button>
-        </div>
-        <!-- Multi-select controls -->
-        <div class="bg-slate-800/50 p-4 border-b border-slate-700 flex justify-between items-center">
-            <label class="flex items-center gap-2 cursor-pointer group">
-                <input type="checkbox" id="select-all-recent" onchange="toggleSelectAllRecent(this.checked)" class="w-4 h-4 rounded border-slate-600 bg-slate-700 text-emerald-500 focus:ring-emerald-500 accent-emerald-500">
-                <span class="text-xs font-bold text-slate-300 group-hover:text-white transition">Select All</span>
-            </label>
-            <button onclick="addSelectedRecentPlayers()" class="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold px-4 py-2 rounded-xl transition text-xs flex items-center gap-2">
-                <i class="fas fa-plus"></i> Add Selected
-            </button>
-        </div>
-        <div class="p-4 overflow-y-auto custom-scrollbar flex-1 space-y-2" id="recent-players-list">
-            <!-- Loaded dynamically -->
-        </div>
-    </div>
-</div>
-
 <div id="player-profile-modal" class="fixed inset-0 z-[120] hidden flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4">
     <div class="bg-slate-900 border border-slate-700 rounded-3xl max-w-sm w-full shadow-2xl overflow-hidden flex flex-col">
         <div class="p-6 text-center relative">
@@ -155,12 +123,7 @@
                 </button>
             </div>
             <h3 id="modal-player-name" class="text-xl font-bold text-white mb-1">Player Name</h3>
-            <div id="modal-player-rating-badge" class="inline-block px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-500 text-[10px] font-black uppercase tracking-tighter mb-2">Intermediate</div>
-
-            <!-- Awards Row -->
-            <div id="modal-player-awards" class="flex justify-center gap-2 mt-2">
-                <!-- Medals loaded here -->
-            </div>
+            <div id="modal-player-rating-badge" class="inline-block px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-500 text-[10px] font-black uppercase tracking-tighter">Intermediate</div>
         </div>
 
         <div class="bg-slate-800/50 p-6 space-y-6">
@@ -181,8 +144,10 @@
                 <label class="text-[10px] text-slate-500 uppercase font-bold mb-2 block ml-1">Update Skill Level</label>
                 <select id="modalPlayerRating" class="w-full bg-slate-900 border border-slate-700 p-3 rounded-xl text-sm text-white outline-none focus:ring-2 focus:ring-emerald-500 transition">
                     <option value="2.0">Beginner</option>
+                    <option value="2.5">Beginning Novice</option>
                     <option value="3.0">Novice</option>
                     <option value="3.5">Intermediate</option>
+                    <option value="4.0">Advanced Intermediate</option>
                     <option value="4.5">Advanced</option>
                 </select>
             </div>
@@ -260,11 +225,19 @@
                 <input id="newPlayerName" type="text" list="player-suggestions" placeholder="New Player Name..." oninput="handleNameInput(this.value)" class="w-full bg-slate-700 dark:bg-slate-800 border border-slate-600 dark:border-slate-700 rounded-xl px-4 py-2 text-sm text-slate-100 focus:ring-2 focus:ring-emerald-500 outline-none">
                 <datalist id="player-suggestions"></datalist>
             </div>
-            <button onclick="showRecentPlayers()" class="bg-slate-700 dark:bg-slate-800 hover:bg-slate-600 dark:hover:bg-slate-700 text-slate-200 dark:text-slate-300 px-4 py-2 rounded-xl transition flex items-center gap-2 text-xs whitespace-nowrap">
-                <i class="fas fa-history"></i> Recent
-            </button>
+            <div id="new-player-rating-container">
+                <select id="newPlayerRating" class="w-full bg-slate-700 dark:bg-slate-800 border border-slate-600 dark:border-slate-700 rounded-xl px-4 py-2 text-sm text-slate-100 focus:ring-2 focus:ring-emerald-500 outline-none">
+                    <option value="">Skill Level...</option>
+                    <option value="2.0">Beginner</option>
+                    <option value="2.5">Beginning Novice</option>
+                    <option value="3.0">Novice</option>
+                    <option value="3.5">Intermediate</option>
+                    <option value="4.0">Advanced Intermediate</option>
+                    <option value="4.5">Advanced</option>
+                </select>
+            </div>
             <button onclick="addPlayer()" class="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold px-4 py-2 rounded-xl transition text-sm flex items-center gap-2 whitespace-nowrap">
-                <i class="fas fa-plus"></i> Add
+                <i class="fas fa-plus"></i> Add Player
             </button>
         </div>
     </div>
@@ -391,45 +364,26 @@
 </main>
 
 <div id="export-modal" class="fixed inset-0 z-[140] hidden flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4">
-    <div class="bg-slate-900 border border-slate-700 rounded-3xl max-w-sm w-full shadow-2xl overflow-hidden p-6 text-center">
-        <div class="w-16 h-16 bg-emerald-500/20 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4">
-            <i class="fas fa-file-export text-2xl"></i>
+    <div class="bg-slate-900 border border-slate-700 rounded-3xl max-w-sm w-full shadow-2xl overflow-hidden flex flex-col">
+        <div class="p-6 border-b border-slate-800 text-center relative">
+            <h3 class="text-xl font-bold text-white">Export Summary</h3>
+            <button onclick="closeExportModal()" class="text-slate-400 hover:text-white absolute right-6 top-6"><i class="fas fa-times text-xl"></i></button>
         </div>
-        <h3 class="text-xl font-bold text-white mb-2">Export Session Summary</h3>
-        <p class="text-sm text-slate-400 mb-6">Choose your preferred format for the session leaderboard and match logs.</p>
-
-        <div class="space-y-3">
-            <button onclick="executeExport('pdf')" class="w-full py-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-2xl transition flex items-center justify-center gap-3">
-                <i class="fas fa-file-pdf"></i> Generate PDF Report
+        <div class="p-6 space-y-4">
+            <button onclick="executeExport('excel')" class="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-2xl transition flex items-center justify-center gap-3">
+                <i class="fas fa-file-excel text-xl"></i> Export CSV (Excel)
             </button>
-            <button onclick="executeExport('excel')" class="w-full py-4 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-2xl transition flex items-center justify-center gap-3 border border-slate-700">
-                <i class="fas fa-file-csv"></i> Download CSV (Excel)
-            </button>
-            <button onclick="closeExportModal()" class="w-full py-3 text-slate-500 hover:text-slate-300 transition text-sm font-bold">
-                Cancel
+            <button onclick="executeExport('pdf')" class="w-full py-4 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-2xl transition flex items-center justify-center gap-3">
+                <i class="fas fa-file-pdf text-xl"></i> Print / Save PDF
             </button>
         </div>
-    </div>
-</div>
-
-<!-- Medal Detail Popup -->
-<div id="medal-detail-modal" class="fixed inset-0 z-[200] hidden flex items-center justify-center bg-slate-950/90 backdrop-blur-md p-4" onclick="closeMedalDetail()">
-    <div class="bg-slate-900 border border-slate-700 rounded-3xl max-w-xs w-full shadow-2xl p-6 text-center space-y-4" onclick="event.stopPropagation()">
-        <div id="medal-detail-icon" class="text-6xl mb-2"></div>
-        <h4 id="medal-detail-title" class="text-xl font-bold text-white">Medal Title</h4>
-        <div id="medal-detail-date" class="text-xs text-slate-500 uppercase font-bold tracking-widest">Date</div>
-        <div class="bg-slate-800/50 p-4 rounded-2xl border border-slate-700/50">
-            <div class="text-[10px] text-slate-500 uppercase font-bold mb-2">Session Stats</div>
-            <div id="medal-detail-stats" class="text-lg font-bold text-emerald-500">0W / 0L</div>
-        </div>
-        <button onclick="closeMedalDetail()" class="w-full py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl transition">Close</button>
     </div>
 </div>
 
 <script>
     // --- DATABASE LAYER (Dexie.js) ---
     const db = new Dexie("CourtManagerDB");
-    db.version(3).stores({
+    db.version(2).stores({
         players: "++id, &name, photoBlob",
         matchHistory: "++id, timestamp",
         config: "key"
@@ -437,8 +391,10 @@
 
     const RATING_LEVELS = [
         { label: "Beginner", value: 2.0 },
+        { label: "Beginning Novice", value: 2.5 },
         { label: "Novice", value: 3.0 },
         { label: "Intermediate", value: 3.5 },
+        { label: "Advanced Intermediate", value: 4.0 },
         { label: "Advanced", value: 4.5 }
     ];
 
@@ -481,45 +437,13 @@
     // Player editing state
     let editingPlayerId = null;
 
-    // --- PHOTO HELPERS ---
-    function getPhotoUrl(p) {
-        if (!p || !p.photoBlob || !(p.photoBlob instanceof Blob)) return 'logo.jpg';
-        // Reuse object URL if it exists, otherwise create it
-        if (!p._objectUrl) {
-            p._objectUrl = URL.createObjectURL(p.photoBlob);
-        }
-        return p._objectUrl;
-    }
-
-    function updatePlayerPhoto(p, newBlob) {
-        if (p._objectUrl) {
-            URL.revokeObjectURL(p._objectUrl);
-        }
-        p._objectUrl = null;
-        p.photoBlob = newBlob;
-    }
-
     // --- PERSISTENCE LAYER LOADER ---
     async function loadFromStorage() {
         if (localStorage.getItem('pq_players')) {
             players = JSON.parse(localStorage.getItem('pq_players'));
-            // Restore photoBlobs from IndexedDB
-            for (let p of players) {
-                const gp = await db.players.where('name').equals(p.name).first();
-                if (gp && gp.photoBlob) {
-                    p.photoBlob = gp.photoBlob;
-                }
-            }
         }
         if (localStorage.getItem('pq_archivedPlayers')) {
             archivedPlayers = JSON.parse(localStorage.getItem('pq_archivedPlayers'));
-            // Restore photoBlobs from IndexedDB for archived players
-            for (let p of archivedPlayers) {
-                const gp = await db.players.where('name').equals(p.name).first();
-                if (gp && gp.photoBlob) {
-                    p.photoBlob = gp.photoBlob;
-                }
-            }
         }
         if (localStorage.getItem('pq_courts')) {
             courts = JSON.parse(localStorage.getItem('pq_courts'));
@@ -558,14 +482,8 @@
 
     // --- PERSISTENCE LAYER SAVER ---
     function saveToStorage() {
-        // Strip photoBlob and _objectUrl before saving to localStorage to prevent corruption/size issues
-        const stripPhotos = (list) => list.map(p => {
-            const { photoBlob, _objectUrl, ...rest } = p;
-            return rest;
-        });
-
-        localStorage.setItem('pq_players', JSON.stringify(stripPhotos(players)));
-        localStorage.setItem('pq_archivedPlayers', JSON.stringify(stripPhotos(archivedPlayers)));
+        localStorage.setItem('pq_players', JSON.stringify(players));
+        localStorage.setItem('pq_archivedPlayers', JSON.stringify(archivedPlayers));
         localStorage.setItem('pq_courts', JSON.stringify(courts));
         localStorage.setItem('pq_waitingQueue', JSON.stringify(waitingQueue));
         localStorage.setItem('pq_upNextDeck', JSON.stringify(upNextDeck));
@@ -580,44 +498,9 @@
     }
 
     // --- RESET SYSTEM FUNCTION ---
-async function processAwards() {
-    const activeRoster = [...players, ...archivedPlayers];
-    const eligible = activeRoster.filter(p => p.games >= 3);
-
-    if (eligible.length < 3) return;
-
-    // Sort for top 3
-    eligible.sort((a, b) => {
-        const wrA = getWinRate(a);
-        const wrB = getWinRate(b);
-        if (wrB !== wrA) return wrB - wrA;
-        if (b.wins !== a.wins) return b.wins - a.wins;
-        return b.games - a.games;
-    });
-
-    const date = new Date().toLocaleDateString();
-    const medalTypes = ['gold', 'silver', 'bronze'];
-
-    for (let i = 0; i < 3; i++) {
-        const p = eligible[i];
-        const type = medalTypes[i];
-
-        // Update DB
-        const gp = await db.players.where('name').equals(p.name).first();
-        if (gp) {
-            const awards = gp.awards || [];
-            awards.push({ type, date, wins: p.wins, games: p.games });
-            await db.players.update(gp.id, { awards });
-        }
-    }
-}
-
-async function resetAllData() {
-    if (!confirm("Are you sure you want to completely wipe out all players, stats, and court logs? This cannot be undone.")) return;
-
-    await processAwards();
-
-    localStorage.clear();
+    function resetAllData() {
+        if (!confirm("Are you sure you want to completely wipe out all players, stats, and court logs? This cannot be undone.")) return;
+        localStorage.clear();
         players = [];
         archivedPlayers = [];
         courts = [
@@ -641,23 +524,21 @@ async function resetAllData() {
     }
 
     function getPlayerFairnessScore(p) {
+        const activeMs = getPlayerActiveDurationMs(p);
+        const activeHours = Math.max(activeMs / 3600000, 0.1);
+        const gamesPerHour = p.games / activeHours;
         const waitMinutes = p.status === 'Queued' ? Math.max((Date.now() - (p.queuedAt || Date.now())) / 60000, 0) : 0;
+        const idleMinutes = ((p.totalIdleMs || 0) + ((p.status === 'Idle' && p.idleStartedAt) ? Date.now() - p.idleStartedAt : 0)) / 60000;
+        const checkInHours = Math.max((Date.now() - (p.checkInEpoch || Date.now())) / 3600000, 0);
 
-        // NEW Fair Rotation Logic:
-        // 1. Newcomers (0 games) get absolute priority.
-        // 2. Everyone else follows FIFO (Wait time based on queuedAt).
-        // 3. We use a massive priority offset for 0-game players.
-
-        let score = (p.queuedAt || Date.now());
-
-        if (p.games === 0) {
-            score -= 1000000000000; // Offset by ~31 years to ensure they are at the front
-        }
-
+        const baseScore = (gamesPerHour * 4) - waitMinutes - (idleMinutes * 0.25) - (checkInHours * 0.15);
         return {
-            score: score,
-            waitMinutes: waitMinutes,
-            games: p.games
+            score: baseScore + (p.justPlayed ? 8 : 0),
+            gamesPerHour,
+            activeHours,
+            waitMinutes,
+            idleMinutes,
+            checkInHours
         };
     }
 
@@ -743,18 +624,14 @@ async function resetAllData() {
 
     function toggleGameTimeMode() {
         gameTimeMode = !gameTimeMode;
-        if (gameTimeMode) rtMode = false;
         saveToStorage();
         updateGameTimeUI();
-        updateRTUI();
     }
 
     function toggleRTMode() {
         rtMode = !rtMode;
-        if (rtMode) gameTimeMode = false;
         saveToStorage();
         updateRTUI();
-        updateGameTimeUI();
         renderRoster(); // Refresh to show/hide ratings
     }
 
@@ -767,12 +644,26 @@ async function resetAllData() {
         if (rtMode) {
             btn.className = 'flex-1 text-xs bg-emerald-500 hover:bg-emerald-600 py-3 rounded-xl font-bold transition text-white flex items-center justify-center gap-2';
             icon.className = 'fas fa-star text-white';
-            btn.title = 'RT Mode On (Fair Pairing)';
+            btn.title = 'RT Mode On (Rating Based)';
         } else {
             btn.className = 'flex-1 text-xs bg-slate-700 hover:bg-slate-600 py-3 rounded-xl font-bold transition text-slate-200 flex items-center justify-center gap-2';
             icon.className = 'fas fa-star text-slate-200';
             btn.title = 'RT Mode Off';
         }
+
+        // Show/Hide rating selection in Add Player
+        const container = document.getElementById('new-player-rating-container');
+        if (container) {
+            container.classList.toggle('hidden', !rtMode);
+        }
+    }
+
+    function toggleRTMode() {
+        rtMode = (rtMode + 1) % 3;
+        if (rtMode > 0) gameTimeMode = false;
+        saveToStorage();
+        updateRTUI();
+        renderRoster(); // Refresh to show/hide ratings
     }
 
     function toggleFairQueueMode() {
@@ -813,20 +704,78 @@ async function resetAllData() {
         const text = document.getElementById('fairq-text');
         const btn = document.getElementById('fairq-toggle');
         if (!icon || !text || !btn) return;
-
+        text.innerText = 'FairQ';
         if (fairQueueMode) {
             btn.className = 'flex-1 text-xs bg-emerald-500 hover:bg-emerald-600 px-2 py-3 rounded-xl font-bold transition text-white flex items-center justify-center gap-2';
             icon.className = 'fas fa-balance-scale text-white';
-            text.innerText = 'FairQ';
-            btn.title = 'FairQ Mode ON (Skill Based)';
+            btn.title = 'Fair Queue On';
         } else {
-            btn.className = 'flex-1 text-xs bg-blue-600 hover:bg-blue-500 px-2 py-3 rounded-xl font-bold transition text-white flex items-center justify-center gap-2';
-            icon.className = 'fas fa-list-ol text-white';
-            text.innerText = 'FIFO';
-            btn.title = 'FIFO Mode ON (Fair Rotation)';
+            btn.className = 'flex-1 text-xs bg-slate-700 hover:bg-slate-600 px-2 py-3 rounded-xl font-bold transition text-slate-200 flex items-center justify-center gap-2';
+            icon.className = 'fas fa-balance-scale text-slate-200';
+            btn.title = 'Fair Queue Off';
         }
     }
 
+    // Fair shuffle: prefer seed or queuedAt order, then pick lowest-overlap window
+    function shuffleWaitingQueueFair(candidates) {
+        if (!Array.isArray(candidates) || candidates.length < 4) return [];
+        const candSet = new Set(candidates.map(p => p.id));
+        // Build ordered pool: prefer seed order if available
+        let orderedPool = [];
+        if (Array.isArray(fairQueueSeedOrder) && fairQueueSeedOrder.length > 0) {
+            orderedPool = fairQueueSeedOrder.map(id => players.find(p => p.id === id)).filter(Boolean).filter(p => candSet.has(p.id));
+        }
+        if (orderedPool.length === 0) {
+            orderedPool = [...candidates].sort((a, b) => {
+                if (rtMode) {
+                    // In RT Mode + FairQ, we still want fairness but maybe grouped by rating?
+                    // For now, stick to fairness score
+                }
+                return getPlayerFairnessScore(a).score - getPlayerFairnessScore(b).score;
+            });
+        }
+
+        // Choose the best contiguous window from the ordered pool
+        const windowChoice = chooseLowestOverlapWindow(orderedPool, 4);
+        if (windowChoice && windowChoice.length === 4) return windowChoice;
+
+        // Fallback: randomized search preferring low overlap
+        let best = null;
+        let bestScore = Infinity;
+        for (let attempt = 0; attempt < STRICT_ATTEMPTS; attempt++) {
+            const candidateGroup = getRandomSample(candidates, 4);
+            const ids = candidateGroup.map(p => p.id);
+            const pen = computeOverlapPenalty(ids);
+            const rates = candidateGroup.map(p => rtMode ? p.ratingValue : getWinRate(p));
+            const range = Math.max(...rates) - Math.min(...rates);
+            const score = (pen.score * PENALTY_WEIGHT) + (range * (rtMode ? 100 : 1)) + (pen.maxCommon * 1000);
+            if (pen.maxCommon <= MAX_ALLOWED_OVERLAP && pen.score === 0) return candidateGroup;
+            if (score < bestScore) {
+                bestScore = score;
+                best = candidateGroup;
+            }
+        }
+        return best || [];
+    }
+
+    function chooseLowestOverlapWindow(pool, size) {
+        if (!Array.isArray(pool) || pool.length < size) return [];
+        let best = null;
+        let bestScore = Infinity;
+        for (let i = 0; i <= pool.length - size; i++) {
+            const slice = pool.slice(i, i + size);
+            const ids = slice.map(p => p.id);
+            const pen = computeOverlapPenalty(ids);
+            const queuedSum = slice.reduce((s, p) => s + (p.queuedAt || 0), 0);
+            const ratingRange = rtMode ? (Math.max(...slice.map(p => p.ratingValue)) - Math.min(...slice.map(p => p.ratingValue))) : 0;
+            const score = (pen.score * PENALTY_WEIGHT) + (pen.maxCommon * 1000) + (queuedSum / 1000000) + (ratingRange * 100);
+            if (score < bestScore) {
+                bestScore = score;
+                best = slice;
+            }
+        }
+        return best || [];
+    }
 
     function renderCourtSelection() {
         const row = document.getElementById('court-select-row');
@@ -860,50 +809,39 @@ async function resetAllData() {
 
     // Compute overlap penalty for a candidate group of player IDs
     // Returns an object: { maxCommon, pairCountSum, score }
+    // - maxCommon: maximum number of players this candidate shares with any historical match (0..4)
+    // - pairCountSum: sum of historical co-occurrences for every pair within the candidate (higher => more repeated pairings)
+    // - score: combined numeric score used for ranking/candidates (higher is worse)
     function computeOverlapPenalty(candidateIds) {
         if (!Array.isArray(candidateIds) || candidateIds.length === 0) return { maxCommon: 0, pairCountSum: 0, score: 0 };
+        // Ensure numeric ids and sorted
         const candSet = new Set(candidateIds.map(id => parseInt(id, 10)));
-
         let maxCommon = 0;
+        // Count pair co-occurrences across history
+        const pairs = [];
+        const idArr = Array.from(candSet);
+        for (let i = 0; i < idArr.length; i++) {
+            for (let j = i + 1; j < idArr.length; j++) {
+                pairs.push([idArr[i], idArr[j]]);
+            }
+        }
+
         let pairCountSum = 0;
-
-        // Consecutive lineups to check against:
-        // 1. Matches already in upNextDeck (staged matches)
-        // 2. The most recent match in matchHistory (last completed)
-        const stagedLineups = upNextDeck.map(m => [m.p1, m.p2, m.p3, m.p4].map(id => parseInt(id, 10)));
-        const lastCompletedLineup = matchHistory.length > 0 ? matchHistory[matchHistory.length - 1].playerIds.map(id => parseInt(id, 10)) : [];
-
-        const consecutiveLineups = [...stagedLineups];
-        if (lastCompletedLineup.length > 0) consecutiveLineups.push(lastCompletedLineup);
-
-        // All historical matches for general variety
-        const historicalLineups = matchHistory.map(h => (h.playerIds || []).map(id => parseInt(id, 10)));
-
-        const checkOverlap = (lineup, weight) => {
-            const histSet = new Set(lineup);
+        matchHistory.forEach(h => {
+            if (!h.playerIds) return;
+            const histSet = new Set(h.playerIds.map(id => parseInt(id, 10)));
+            // compute how many players are shared with this historical match
             let common = 0;
             candSet.forEach(id => { if (histSet.has(id)) common++; });
             if (common > maxCommon) maxCommon = common;
+            // for each pair in the candidate, check if both appeared together in this historical match
+            pairs.forEach(([a, b]) => {
+                if (histSet.has(a) && histSet.has(b)) pairCountSum += 1;
+            });
+        });
 
-            // For each pair in the candidate, check if both appeared together in this lineup
-            const idArr = Array.from(candSet);
-            for (let i = 0; i < idArr.length; i++) {
-                for (let j = i + 1; j < idArr.length; j++) {
-                    if (histSet.has(idArr[i]) && histSet.has(idArr[j])) {
-                        pairCountSum += weight;
-                    }
-                }
-            }
-        };
-
-        // Heavy penalty for consecutive overlaps
-        consecutiveLineups.forEach(l => checkOverlap(l, 50));
-        // Light penalty for historical repeats
-        historicalLineups.forEach(l => checkOverlap(l, 1));
-
-        // Score: prioritize low maxCommon, then low pairCountSum
-        // Exponentially penalize maxCommon to strictly avoid 2+ overlaps
-        const score = (Math.pow(maxCommon, 4) * 10000) + pairCountSum;
+        // Compute a simple numeric score: weight larger overlaps heavily, add pair co-occurrence as tiebreaker
+        const score = (maxCommon * 100) + pairCountSum;
         return { maxCommon, pairCountSum, score };
     }
 
@@ -1112,70 +1050,64 @@ async function resetAllData() {
     }
 
     function renderRoster() {
-        const container = document.getElementById('roster-container');
-        if (!container) return;
-        document.getElementById('roster-count').innerText = players.length;
+const container = document.getElementById('roster-container');
+if (!container) return;
+document.getElementById('roster-count').innerText = players.length;
 
-        if (players.length === 0) {
-            container.innerHTML = `<div class="text-xs text-slate-500 italic text-center py-4">No players registered. Add players above.</div>`;
-            return;
-        }
+if (players.length === 0) {
+    container.innerHTML = `<div class="text-xs text-slate-500 italic text-center py-4">No players registered. Add players above.</div>`;
+    return;
+}
 
-        const themeCardBg = isDarkMode ? "bg-slate-800/50 border-slate-700/50" : "bg-white border-slate-200 shadow-sm";
-        const themeTextMain = isDarkMode ? "text-slate-200" : "text-slate-800";
-        const themeTextBadges = isDarkMode ? "bg-slate-700 text-slate-400" : "bg-slate-200 text-slate-600";
+const themeCardBg = isDarkMode ? "bg-slate-800/50 border-slate-700/50" : "bg-white border-slate-200 shadow-sm";
+const themeTextMain = isDarkMode ? "text-slate-200" : "text-slate-800";
+const themeTextBadges = isDarkMode ? "bg-slate-700 text-slate-400" : "bg-slate-200 text-slate-600";
 
-        // Create a stable sort for display
-        const displayPlayers = [...players].sort((a,b) => b.id - a.id).sort((a,b) => getWinRate(b) - getWinRate(a));
-
-        container.innerHTML = displayPlayers.map(p => {
-            let actionButton = '';
-            if (p.status === 'Available') {
-                actionButton = `<button onclick="sendToQueue(${p.id})" class="bg-emerald-500/10 text-emerald-500 p-2 rounded-lg text-xs hover:bg-emerald-500 hover:text-slate-950 transition"><i class="fas fa-plus"></i></button>`;
-            }
-
-            // Add Idle / Check-In button conditional layout
-            let idleToggleBtn = '';
-            if (p.status === 'Queued' || p.status === 'Available') {
-                idleToggleBtn = `<button onclick="setPlayerIdle(${p.id})" title="Go Idle" class="text-slate-400 hover:text-amber-500 transition p-1"><i class="fas fa-coffee"></i></button>`;
-            } else if (p.status === 'Idle') {
-                idleToggleBtn = `<button onclick="checkInFromIdle(${p.id})" title="Check In" class="text-amber-500 hover:text-emerald-500 font-bold transition p-1 text-xs flex items-center gap-1"><i class="fas fa-sign-in-alt"></i> Check In</button>`;
-            }
-
-            // Skill level dots mapping
-            const dotMap = { 2.0: 1, 3.0: 2, 3.5: 3, 4.5: 4 };
-            const dotsCount = dotMap[p.ratingValue] || 0;
-            const dotsHtml = rtMode > 0 && dotsCount > 0 ?
-                `<div class="flex gap-0.5 mt-0.5">${Array(dotsCount).fill('<div class="w-1.5 h-1.5 rounded-full bg-amber-500"></div>').join('')}</div>` : '';
-
-            // Handle Photo Rendering - Use Helper
-            const photoUrl = getPhotoUrl(p);
-
-            return `
-                <div class="${themeCardBg} border p-3 rounded-2xl flex justify-between items-center cursor-pointer hover:border-emerald-500/50 transition-all duration-300" onclick="openPlayerProfile(${p.id})">
-                    <div class="flex-1">
-                        <div class="font-bold text-sm ${themeTextMain} flex items-center gap-2">
-                            <img src="${photoUrl}" class="w-8 h-8 rounded-full object-cover">
-                            <div class="flex flex-col">
-                                <span>${p.name}</span>
-                                ${dotsHtml}
-                            </div>
-                            <span class="text-[10px] ${p.status === 'Idle' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : themeTextBadges} px-1.5 py-0.5 rounded font-normal ml-1">${p.status}</span>
-                            ${getPlayerStatusDetail(p) ? `<span class="text-[9px] text-slate-400 font-normal ml-2">${getPlayerStatusDetail(p)}</span>` : ''}
-                        </div>
-                        <div class="text-[10px] text-slate-400 uppercase font-bold mt-0.5 ml-10">
-                            ${p.wins}W / ${p.games - p.wins}L • <span class="text-emerald-500">${getWinRate(p)}% Winrate</span>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-2" onclick="event.stopPropagation()">
-                        ${actionButton}
-                        ${idleToggleBtn}
-                        <button onclick="removePlayer(${p.id})" class="text-slate-400 hover:text-rose-500 transition px-2"><i class="fas fa-trash"></i></button>
-                    </div>
-                </div>
-            `;
-        }).join('');
+container.innerHTML = players.sort((a,b) => b.id - a.id).sort((a,b) => getWinRate(b) - getWinRate(a)).map(p => {
+    let actionButton = '';
+    if (p.status === 'Available') {
+        actionButton = `<button onclick="sendToQueue(${p.id})" class="bg-emerald-500/10 text-emerald-500 p-2 rounded-lg text-xs hover:bg-emerald-500 hover:text-slate-950 transition"><i class="fas fa-plus"></i></button>`;
     }
+
+    // Add Idle / Check-In button conditional layout
+    let idleToggleBtn = '';
+    if (p.status === 'Queued' || p.status === 'Available') {
+        idleToggleBtn = `<button onclick="setPlayerIdle(${p.id})" title="Go Idle" class="text-slate-400 hover:text-amber-500 transition p-1"><i class="fas fa-coffee"></i></button>`;
+    } else if (p.status === 'Idle') {
+        idleToggleBtn = `<button onclick="checkInFromIdle(${p.id})" title="Check In" class="text-amber-500 hover:text-emerald-500 font-bold transition p-1 text-xs flex items-center gap-1"><i class="fas fa-sign-in-alt"></i> Check In</button>`;
+    }
+
+    // Skill level dots mapping
+    const dotMap = { 2.0: 1, 2.5: 2, 3.0: 3, 3.5: 4, 4.0: 5, 4.5: 6 };
+    const dotsCount = dotMap[p.ratingValue] || 0;
+    const dotsHtml = rtMode > 0 && dotsCount > 0 ?
+        `<div class="flex gap-0.5 mt-0.5">${Array(dotsCount).fill('<div class="w-1.5 h-1.5 rounded-full bg-amber-500"></div>').join('')}</div>` : '';
+
+    return `
+        <div class="${themeCardBg} border p-3 rounded-2xl flex justify-between items-center cursor-pointer hover:border-emerald-500/50 transition-all duration-300" onclick="openPlayerProfile(${p.id})">
+            <div class="flex-1">
+                <div class="font-bold text-sm ${themeTextMain} flex items-center gap-2">
+                    <img src="${p.photoBlob ? (p.photoBlob instanceof Blob ? URL.createObjectURL(p.photoBlob) : p.photoBlob) : 'logo.jpg'}" class="w-8 h-8 rounded-full object-cover">
+                    <div class="flex flex-col">
+                        <span>${p.name}</span>
+                        ${dotsHtml}
+                    </div>
+                    <span class="text-[10px] ${p.status === 'Idle' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : themeTextBadges} px-1.5 py-0.5 rounded font-normal ml-1">${p.status}</span>
+                    ${getPlayerStatusDetail(p) ? `<span class="text-[9px] text-slate-400 font-normal ml-2">${getPlayerStatusDetail(p)}</span>` : ''}
+                </div>
+                <div class="text-[10px] text-slate-400 uppercase font-bold mt-0.5 ml-10">
+                    ${p.wins}W / ${p.games - p.wins}L • <span class="text-emerald-500">${getWinRate(p)}% Winrate</span>
+                </div>
+            </div>
+            <div class="flex items-center gap-2" onclick="event.stopPropagation()">
+                ${actionButton}
+                ${idleToggleBtn}
+                <button onclick="removePlayer(${p.id})" class="text-slate-400 hover:text-rose-500 transition px-2"><i class="fas fa-trash"></i></button>
+            </div>
+        </div>
+    `;
+}).join('');
+}
 
 function renderCheckedOutPlayers() {
     const container = document.getElementById('checked-out-container');
@@ -1477,28 +1409,38 @@ function permanentlyRemovePlayer(id) {
         // Copy to avoid mutating original array
         const copy = [...selectedPlayers];
 
-        // Determine ranking source: RT Mode uses Dots, otherwise use Winrate
+        // Determine ranking for consistent team formation
         if (rtMode) {
-            copy.sort((a, b) => (b.ratingValue || 0) - (a.ratingValue || 0));
+            // Sort by Rating (High to Low)
+            copy.sort((a, b) => b.ratingValue - a.ratingValue);
         } else {
+            // Sort by Winrate (High to Low)
             copy.sort((a, b) => getWinRate(b) - getWinRate(a));
         }
 
         let p1, p2, p3, p4;
 
-        // 1. GMT ON: Competitive (Top 2 vs Next 2)
+        // Logic Matrix:
+        // GMT ON  + RT ON  => Nearest Rating (Top 2 vs Next 2)
+        // GMT OFF + RT ON  => Fair Rating (High-Low vs High-Low)
+        // GMT ON  + RT OFF => Competitive Winrate (Top 2 vs Next 2)
+        // GMT OFF + RT OFF => Fair Winrate (High-Low vs High-Low)
+
         if (gameTimeMode) {
+            // Competitive: Rank 1 & 2 vs Rank 3 & 4
+            // User requested: "4 players should be closed in winrate or skill level"
+            // Our current source pool (candidates) is already slice(0, 6) or similar close-proximity window.
+            // Matching 1+2 vs 3+4 is the competitive "Closed" style (Top vs Top).
             p1 = copy[0].id;
             p2 = copy[1].id;
             p3 = copy[2].id;
             p4 = copy[3].id;
-        }
-        // 2. RT ON or Default: Fair Pairing (Top/Beginner vs Middle/Advanced)
-        else {
-            p1 = copy[0].id; // Advance (Rank 1)
-            p2 = copy[3].id; // Beginner (Rank 4)
-            p3 = copy[1].id; // Advance (Rank 2)
-            p4 = copy[2].id; // Beginner (Rank 3)
+        } else {
+            // Balanced: Rank 1 & 4 vs Rank 2 & 3
+            p1 = copy[0].id;
+            p2 = copy[3].id;
+            p3 = copy[1].id;
+            p4 = copy[2].id;
         }
 
         return { id: Date.now(), p1, p2, p3, p4, isEditing: false };
@@ -1566,99 +1508,15 @@ function permanentlyRemovePlayer(id) {
         renderGlobalStatsTable();
     }
 
-    function showRecentPlayers() {
-        document.getElementById('recent-players-modal').classList.remove('hidden');
-        renderRecentPlayersList();
-    }
-
-    function closeRecentPlayers() {
-        document.getElementById('recent-players-modal').classList.add('hidden');
-    }
-
-    async function renderRecentPlayersList() {
-        const list = document.getElementById('recent-players-list');
-        list.innerHTML = '<div class="text-center py-8 text-slate-500"><i class="fas fa-spinner fa-spin mr-2"></i> Loading recent players...</div>';
-
-        // Reset "Select All" checkbox
-        const selectAllBox = document.getElementById('select-all-recent');
-        if (selectAllBox) selectAllBox.checked = false;
-
-        try {
-            // Fetch all players from global DB, sort by lastSeen desc
-            let globalPlayers = await db.players.toArray();
-            globalPlayers.sort((a, b) => (b.lastSeen || 0) - (a.lastSeen || 0));
-
-            // Filter out players already in the current session (active or archived)
-            const sessionNames = new Set(players.concat(archivedPlayers).map(p => p.name.toLowerCase()));
-            const recentOnes = globalPlayers.filter(p => !sessionNames.has(p.name.toLowerCase())).slice(0, 15);
-
-            if (recentOnes.length === 0) {
-                list.innerHTML = `
-                    <div class="text-center py-10 px-4">
-                        <i class="fas fa-users-slash text-4xl text-slate-700 mb-3"></i>
-                        <p class="text-slate-400 text-sm font-bold">No previous players found.</p>
-                        <p class="text-slate-500 text-xs mt-1">Players will appear here after their first session.</p>
-                    </div>`;
-                return;
-            }
-
-            list.innerHTML = recentOnes.map(p => {
-                const photoUrl = getPhotoUrl(p);
-                const safeName = p.name.replace(/'/g, "\\'");
-                return `
-                    <div class="bg-slate-800/40 border border-slate-700/50 p-3 rounded-2xl flex justify-between items-center hover:border-emerald-500/30 transition-all group">
-                        <div class="flex items-center gap-3">
-                            <input type="checkbox" name="recent-player-checkbox" value="${safeName}" class="w-4 h-4 rounded border-slate-600 bg-slate-700 text-emerald-500 focus:ring-emerald-500 accent-emerald-500 cursor-pointer">
-                            <div class="relative">
-                                <img src="${photoUrl}" class="w-10 h-10 rounded-full object-cover border border-slate-700">
-                            </div>
-                            <div class="flex flex-col">
-                                <span class="font-bold text-slate-200 group-hover:text-white transition">${p.name}</span>
-                                <span class="text-[9px] text-amber-500 font-bold uppercase tracking-wider">${p.ratingLevel || 'Unrated'}</span>
-                            </div>
-                        </div>
-                        <button onclick="addGlobalPlayerToSession('${safeName}')" class="bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-slate-950 px-4 py-2 rounded-xl font-black text-[10px] uppercase tracking-widest transition shadow-sm">
-                            Select
-                        </button>
-                    </div>
-                `;
-            }).join('');
-        } catch (e) {
-            console.error(e);
-            list.innerHTML = '<div class="text-center py-8 text-rose-500">Error loading recent players.</div>';
-        }
-    }
-
-    function toggleSelectAllRecent(checked) {
-        const checkboxes = document.querySelectorAll('input[name="recent-player-checkbox"]');
-        checkboxes.forEach(cb => cb.checked = checked);
-    }
-
-    async function addSelectedRecentPlayers() {
-        const selectedCheckboxes = document.querySelectorAll('input[name="recent-player-checkbox"]:checked');
-        const names = Array.from(selectedCheckboxes).map(cb => cb.value);
-
-        if (names.length === 0) return alert("Please select at least one player.");
-
-        for (const name of names) {
-            // We'll refactor addGlobalPlayerToSession to allow silent adds
-            await addGlobalPlayerToSession(name, true);
-        }
-
-        saveToStorage();
-        renderSystem();
-        closeRecentPlayers();
-    }
-
     function setStatsTab(tab) {
         statsCurrentTab = tab;
         // Update UI
         document.getElementById('tab-leaderboard').className = (tab === 'leaderboard' ? 'stats-tab-active' : 'stats-tab-inactive') + ' py-1';
-        document.getElementById('tab-awards').className = (tab === 'awards' ? 'stats-tab-active' : 'stats-tab-inactive') + ' py-1';
+        document.getElementById('tab-ranking').className = (tab === 'ranking' ? 'stats-tab-active' : 'stats-tab-inactive') + ' py-1';
 
-        // Default sort
-        if (tab === 'awards') {
-            statsSortKey = 'medals';
+        // Default sort for ranking is skill level
+        if (tab === 'ranking') {
+            statsSortKey = 'skill';
             statsSortDesc = true;
         } else {
             statsSortKey = 'winrate';
@@ -1680,10 +1538,10 @@ function permanentlyRemovePlayer(id) {
 
     async function renderGlobalStatsTable() {
         const body = document.getElementById('global-stats-body');
-        const thead = document.querySelector('#global-stats-modal thead tr');
         body.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-slate-500">Loading global stats...</td></tr>';
 
         let globalPlayers = await db.players.toArray();
+        const allHistory = await db.matchHistory.toArray();
         const skillFilter = document.getElementById('stats-skill-filter').value;
 
         // Apply Skill Filter
@@ -1692,84 +1550,56 @@ function permanentlyRemovePlayer(id) {
             globalPlayers = globalPlayers.filter(p => p.ratingValue === filterVal);
         }
 
-        if (statsCurrentTab === 'awards') {
-            // Update Header for Awards
-            thead.innerHTML = `
-                <th class="px-4 py-2 cursor-pointer" onclick="setStatsSort('name')">Player <i class="fas fa-sort ml-1"></i></th>
-                <th class="px-4 py-2 text-center">Gold</th>
-                <th class="px-4 py-2 text-center">Silver</th>
-                <th class="px-4 py-2 text-center">Bronze</th>
-                <th class="px-4 py-2 text-center cursor-pointer" onclick="setStatsSort('medals')">Total Medals <i class="fas fa-sort ml-1"></i></th>
-                <th class="px-4 py-2 text-right">Action</th>
-            `;
-
-            globalPlayers.sort((a, b) => {
-                if (statsSortKey === 'name') {
-                    return statsSortDesc ? b.name.localeCompare(a.name) : a.name.localeCompare(b.name);
-                }
-                const getScore = (p) => {
-                    const g = p.awards?.filter(x => x.type === 'gold').length || 0;
-                    const s = p.awards?.filter(x => x.type === 'silver').length || 0;
-                    const b = p.awards?.filter(x => x.type === 'bronze').length || 0;
-                    if (statsSortKey === 'medals') return (g * 100) + (s * 10) + b;
-                    return g + s + b;
-                };
-                return statsSortDesc ? getScore(b) - getScore(a) : getScore(a) - getScore(b);
-            });
-
-            body.innerHTML = globalPlayers.map(p => {
-                const photoUrl = getPhotoUrl(p);
-                const golds = p.awards?.filter(a => a.type === 'gold').length || 0;
-                const silvers = p.awards?.filter(a => a.type === 'silver').length || 0;
-                const bronzes = p.awards?.filter(a => a.type === 'bronze').length || 0;
-
-                return `
-                    <tr class="border-b border-slate-800 hover:bg-slate-800/50 transition">
-                        <td class="px-4 py-3 flex items-center gap-3">
-                            <img src="${photoUrl}" class="w-8 h-8 rounded-full object-cover">
-                            <div class="flex flex-col">
-                                <span class="font-bold text-slate-100">${p.name}</span>
-                                <span class="text-[9px] text-amber-500 font-bold uppercase">${p.ratingLevel || 'Unrated'}</span>
-                            </div>
-                        </td>
-                        <td class="px-4 py-3 text-center text-amber-400 font-bold">${golds}</td>
-                        <td class="px-4 py-3 text-center text-slate-300 font-bold">${silvers}</td>
-                        <td class="px-4 py-3 text-center text-amber-700 font-bold">${bronzes}</td>
-                        <td class="px-4 py-3 text-center text-emerald-500 font-bold">${golds + silvers + bronzes}</td>
-                        <td class="px-4 py-3 text-right flex items-center justify-end gap-2">
-                            <button onclick="addGlobalPlayerToSession('${p.name}')" class="text-[10px] bg-emerald-500 hover:bg-emerald-600 text-slate-950 px-2 py-1 rounded font-bold transition">Add</button>
-                            <button onclick="removePlayerFromGlobalDB(${p.id})" class="text-slate-400 hover:text-rose-500 transition px-1"><i class="fas fa-trash"></i></button>
-                        </td>
-                    </tr>
-                `;
-            }).join('');
-            return;
-        }
-
-        // Original Leaderboard Header
-        thead.innerHTML = `
-            <th class="px-4 py-2 cursor-pointer" onclick="setStatsSort('name')">Player <i class="fas fa-sort ml-1"></i></th>
-            <th class="px-4 py-2 cursor-pointer" onclick="setStatsSort('winrate')">Winrate <i class="fas fa-sort ml-1"></i></th>
-            <th class="px-4 py-2 cursor-pointer" onclick="setStatsSort('totalGames')">Games <i class="fas fa-sort ml-1"></i></th>
-            <th class="px-4 py-2 cursor-pointer" onclick="setStatsSort('totalWins')">Wins <i class="fas fa-sort ml-1"></i></th>
-            <th class="px-4 py-2">Frequency</th>
-            <th class="px-4 py-2 text-right">Action</th>
-        `;
-
+        // Apply Sorting
         globalPlayers.sort((a, b) => {
-            if (statsSortKey === 'name') {
-                return statsSortDesc ? b.name.localeCompare(a.name) : a.name.localeCompare(b.name);
+            let valA, valB;
+            if (statsSortKey === 'winrate') {
+                valA = a.totalGames === 0 ? 0 : (a.totalWins / a.totalGames);
+                valB = b.totalGames === 0 ? 0 : (b.totalWins / b.totalGames);
+            } else if (statsSortKey === 'games') {
+                valA = a.totalGames || 0;
+                valB = b.totalGames || 0;
+            } else if (statsSortKey === 'wins') {
+                valA = a.totalWins || 0;
+                valB = b.totalWins || 0;
+            } else if (statsSortKey === 'name') {
+                valA = a.name.toLowerCase();
+                valB = b.name.toLowerCase();
+            } else if (statsSortKey === 'skill') {
+                valA = a.ratingValue || 0;
+                valB = b.ratingValue || 0;
             }
-            const getVal = (p, key) => {
-                if (key === 'winrate') return p.totalGames === 0 ? 0 : (p.totalWins / p.totalGames);
-                return p[key] || 0;
-            };
-            return statsSortDesc ? getVal(b, statsSortKey) - getVal(a, statsSortKey) : getVal(a, statsSortKey) - getVal(b, statsSortKey);
+
+            if (valA < valB) return statsSortDesc ? 1 : -1;
+            if (valA > valB) return statsSortDesc ? -1 : 1;
+            return 0;
         });
 
         body.innerHTML = globalPlayers.map(p => {
-            const photoUrl = getPhotoUrl(p);
+            const photoUrl = p.photoBlob ? (p.photoBlob instanceof Blob ? URL.createObjectURL(p.photoBlob) : p.photoBlob) : 'logo.jpg';
             const winRate = p.totalGames === 0 ? 0 : Math.round((p.totalWins / p.totalGames) * 100);
+
+            const pIdStr = String(p.id);
+            const pMatches = allHistory.filter(h => {
+                if (Array.isArray(h.playerIds)) return h.playerIds.includes(p.id);
+                if (typeof h.playerIds === 'string') return h.playerIds.split(',').includes(pIdStr);
+                return false;
+            });
+
+            let avgDaysPerWeek = 0;
+            if (pMatches.length > 0) {
+                const dates = new Set(pMatches.map(h => h.timestamp.split(',')[0]));
+                const uniqueDates = Array.from(dates);
+                if (uniqueDates.length > 1) {
+                    const first = new Date(uniqueDates[0]);
+                    const last = new Date(uniqueDates[uniqueDates.length-1]);
+                    const weeks = Math.max(1, (last - first) / (1000 * 60 * 60 * 24 * 7));
+                    avgDaysPerWeek = (uniqueDates.length / weeks).toFixed(1);
+                } else {
+                    avgDaysPerWeek = uniqueDates.length;
+                }
+            }
+
             return `
                 <tr class="border-b border-slate-800 hover:bg-slate-800/50 transition">
                     <td class="px-4 py-3 flex items-center gap-3">
@@ -1779,13 +1609,15 @@ function permanentlyRemovePlayer(id) {
                             <span class="text-[9px] text-amber-500 font-bold uppercase">${p.ratingLevel || 'Unrated'}</span>
                         </div>
                     </td>
-                    <td class="px-4 py-3 text-emerald-500 font-bold">${winRate}%</td>
+                    <td class="px-4 py-3 text-emerald-400 font-mono">${winRate}%</td>
                     <td class="px-4 py-3 text-slate-300">${p.totalGames || 0}</td>
                     <td class="px-4 py-3 text-slate-300">${p.totalWins || 0}</td>
-                    <td class="px-4 py-3 text-slate-500">${p.totalGames || 0} Matches</td>
-                    <td class="px-4 py-3 text-right flex items-center justify-end gap-2">
-                        <button onclick="addGlobalPlayerToSession('${p.name}')" class="text-[10px] bg-emerald-500 hover:bg-emerald-600 text-slate-950 px-2 py-1 rounded font-bold transition">Add</button>
-                        <button onclick="removePlayerFromGlobalDB(${p.id})" class="text-slate-400 hover:text-rose-500 transition px-1"><i class="fas fa-trash"></i></button>
+                    <td class="px-4 py-3 text-blue-400 font-bold">${avgDaysPerWeek} <span class="text-[8px] text-slate-500 font-normal">days/wk</span></td>
+                    <td class="px-4 py-3 text-right">
+                        <div class="flex justify-end gap-2">
+                            <button onclick="addGlobalPlayerToSession('${p.name}')" class="text-[10px] bg-emerald-500 hover:bg-emerald-600 text-slate-950 px-2 py-1 rounded font-bold transition">Add</button>
+                            <button onclick="removePlayerFromGlobalDB(${p.id})" class="text-[10px] bg-rose-500/20 text-rose-400 hover:bg-rose-500 hover:text-white px-2 py-1 rounded transition"><i class="fas fa-trash-alt"></i></button>
+                        </div>
                     </td>
                 </tr>
             `;
@@ -1810,21 +1642,20 @@ function permanentlyRemovePlayer(id) {
         document.getElementById('guide-modal').classList.add('hidden');
     }
 
-    async function addGlobalPlayerToSession(name, isSilent = false) {
+    async function addGlobalPlayerToSession(name) {
         const gp = await db.players.where('name').equals(name).first();
         if (!gp) return;
 
         const nameExists = players.concat(archivedPlayers).some(p => p.name && p.name.toLowerCase() === name.toLowerCase());
         if (nameExists) {
-            if (!isSilent) alert("This player is already in the current session.");
-            if (!isSilent) closeGlobalStats();
-            if (!isSilent) closeRecentPlayers();
+            alert("This player is already in the current session.");
+            closeGlobalStats();
             return;
         }
 
         const now = new Date();
         const p = {
-            id: Date.now() + Math.floor(Math.random() * 1000), // Add randomness for batch additions
+            id: Date.now(),
             name: gp.name,
             status: 'Available',
             wins: 0,
@@ -1841,23 +1672,11 @@ function permanentlyRemovePlayer(id) {
             photoBlob: gp.photoBlob
         };
 
-        // Update lastSeen in Global DB
-        await db.players.update(gp.id, { lastSeen: Date.now() });
-
         players.push(p);
-
-        if (!isSilent) {
-            saveToStorage();
-            renderSystem();
-            closeGlobalStats();
-            closeRecentPlayers();
-            sendToQueue(p.id);
-        } else {
-            // For silent adds, we still want them in the queue immediately
-            p.status = 'Queued';
-            p.queuedAt = Date.now();
-            if (!waitingQueue.includes(p.id)) waitingQueue.push(p.id);
-        }
+        saveToStorage();
+        renderSystem();
+        closeGlobalStats();
+        sendToQueue(p.id);
     }
 
     async function openPlayerProfile(id) {
@@ -1868,29 +1687,18 @@ function permanentlyRemovePlayer(id) {
 
         // Basic Info
         document.getElementById('modal-player-name').innerText = p.name;
-        document.getElementById('modal-profile-img').src = getPhotoUrl(p);
+        document.getElementById('modal-profile-img').src = p.photoBlob ? (p.photoBlob instanceof Blob ? URL.createObjectURL(p.photoBlob) : p.photoBlob) : 'logo.jpg';
 
         const badge = document.getElementById('modal-player-rating-badge');
         badge.innerText = p.ratingLevel || 'Unrated';
         badge.classList.toggle('hidden', !rtMode);
-
-        // Awards display
-        const gp = await db.players.where('name').equals(p.name).first();
-        const awardsContainer = document.getElementById('modal-player-awards');
-        if (gp && gp.awards && gp.awards.length > 0) {
-            awardsContainer.innerHTML = gp.awards.map((award, index) => {
-                const colors = { gold: 'text-amber-400', silver: 'text-slate-300', bronze: 'text-amber-700' };
-                return `<i class="fas fa-medal ${colors[award.type]} text-2xl cursor-pointer hover:scale-110 transition" onclick="showMedalDetail(${JSON.stringify(award).replace(/"/g, '&quot;')})"></i>`;
-            }).join('');
-        } else {
-            awardsContainer.innerHTML = '';
-        }
 
         // Session Stats
         const sessionWinRate = getWinRate(p);
         document.getElementById('modal-session-stats').innerText = `${p.wins}W / ${p.games - p.wins}L (${sessionWinRate}%)`;
 
         // Global Stats from DB
+        const gp = await db.players.where('name').equals(p.name).first();
         if (gp) {
             const gWR = gp.totalGames === 0 ? 0 : Math.round((gp.totalWins / gp.totalGames) * 100);
             document.getElementById('modal-global-stats').innerText = `${gp.totalWins}W / ${gp.totalGames - gp.totalWins}L (${gWR}%)`;
@@ -1898,22 +1706,6 @@ function permanentlyRemovePlayer(id) {
         }
 
         document.getElementById('player-profile-modal').classList.remove('hidden');
-    }
-
-    function showMedalDetail(award) {
-        const colors = { gold: 'text-amber-400', silver: 'text-slate-300', bronze: 'text-amber-700' };
-        const titles = { gold: 'Gold Medalist', silver: 'Silver Medalist', bronze: 'Bronze Medalist' };
-
-        document.getElementById('medal-detail-icon').innerHTML = `<i class="fas fa-medal ${colors[award.type]}"></i>`;
-        document.getElementById('medal-detail-title').innerText = titles[award.type];
-        document.getElementById('medal-detail-date').innerText = award.date;
-        document.getElementById('medal-detail-stats').innerText = `${award.wins}W / ${award.games - award.wins}L`;
-
-        document.getElementById('medal-detail-modal').classList.remove('hidden');
-    }
-
-    function closeMedalDetail() {
-        document.getElementById('medal-detail-modal').classList.add('hidden');
     }
 
     function closePlayerProfile() {
@@ -1930,9 +1722,8 @@ function permanentlyRemovePlayer(id) {
         const preview = document.getElementById('photo-preview');
         const placeholder = document.getElementById('camera-placeholder');
 
-        const photoUrl = getPhotoUrl(p);
-        if (photoUrl !== 'logo.jpg') {
-            preview.src = photoUrl;
+        if (p.photoBlob) {
+            preview.src = URL.createObjectURL(p.photoBlob);
             preview.classList.remove('hidden');
             placeholder.classList.add('hidden');
         } else {
@@ -1975,6 +1766,12 @@ function permanentlyRemovePlayer(id) {
         const list = document.getElementById('player-suggestions');
         const matches = await db.players.where('name').startsWithIgnoreCase(val).toArray();
         list.innerHTML = matches.map(m => `<option value="${m.name}">`).join('');
+
+        // If exact match, show rating container automatically if RT mode is on
+        const exact = matches.find(m => m.name.toLowerCase() === val.toLowerCase());
+        if (exact && rtMode > 0) {
+            document.getElementById('newPlayerRating').value = exact.ratingValue;
+        }
     }
 
     async function editPlayerProfile(id) {
@@ -1987,9 +1784,8 @@ function permanentlyRemovePlayer(id) {
         const preview = document.getElementById('photo-preview');
         const placeholder = document.getElementById('camera-placeholder');
 
-        const photoUrl = getPhotoUrl(p);
-        if (photoUrl !== 'logo.jpg') {
-            preview.src = photoUrl;
+        if (p.photoBlob) {
+            preview.src = URL.createObjectURL(p.photoBlob);
             preview.classList.remove('hidden');
             placeholder.classList.add('hidden');
         } else {
@@ -2009,9 +1805,7 @@ function permanentlyRemovePlayer(id) {
         const p = players.find(x => x.id == editingPlayerId);
         if (!p) return closePhotoModal();
 
-        if (currentPhotoBlob) {
-            updatePlayerPhoto(p, currentPhotoBlob);
-        }
+        if (currentPhotoBlob) p.photoBlob = currentPhotoBlob;
 
         // Update DB
         const gp = await db.players.where('name').equals(p.name).first();
@@ -2113,6 +1907,8 @@ function permanentlyRemovePlayer(id) {
     async function addPlayer() {
         const inp = document.getElementById('newPlayerName');
         const name = inp.value.trim();
+        const ratingInp = document.getElementById('newPlayerRating');
+        const ratingValue = parseFloat(ratingInp.value);
         if (!name) return;
 
         const nameExists = players.concat(archivedPlayers).some(p => p.name && p.name.toLowerCase() === name.toLowerCase());
@@ -2123,8 +1919,22 @@ function permanentlyRemovePlayer(id) {
         // Check if player exists in global DB to pull stats
         const globalPlayer = await db.players.where('name').equals(name).first();
 
-        // If exact match exists in DB, we use its rating
-        let finalRatingValue = globalPlayer ? globalPlayer.ratingValue : null;
+        // If exact match exists in DB, we use its rating if input is empty
+        let finalRatingValue = ratingValue;
+        if (isNaN(finalRatingValue) && globalPlayer) {
+            finalRatingValue = globalPlayer.ratingValue;
+        }
+
+        // Only prompt for photo if not editing AND player is brand new to DB
+        // DISABLED as per user request: "Do not require user to add profile when adding player"
+        /*
+        if (!currentPhotoBlob && !globalPlayer && !editingPlayerId) {
+            if (confirm("Would you like to add a profile photo for " + name + "?")) {
+                showPhotoModal();
+                return;
+            }
+        }
+        */
 
         const p = {
             id: Date.now(),
@@ -2132,8 +1942,8 @@ function permanentlyRemovePlayer(id) {
             status: 'Available',
             wins: 0,
             games: 0,
-            ratingLevel: !isNaN(finalRatingValue) && finalRatingValue !== null ? RATING_LEVELS.find(r => r.value === finalRatingValue).label : 'Unrated',
-            ratingValue: !isNaN(finalRatingValue) && finalRatingValue !== null ? finalRatingValue : null,
+            ratingLevel: !isNaN(finalRatingValue) ? RATING_LEVELS.find(r => r.value === finalRatingValue).label : 'Unrated',
+            ratingValue: !isNaN(finalRatingValue) ? finalRatingValue : null,
             justPlayed: false,
             queuedAt: null,
             checkInTime: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
@@ -2149,8 +1959,7 @@ function permanentlyRemovePlayer(id) {
             await db.players.update(globalPlayer.id, {
                 ratingLevel: p.ratingLevel,
                 ratingValue: p.ratingValue,
-                photoBlob: p.photoBlob || globalPlayer.photoBlob,
-                lastSeen: now.getTime()
+                photoBlob: p.photoBlob || globalPlayer.photoBlob
             });
         } else {
             await db.players.add({
@@ -2166,6 +1975,7 @@ function permanentlyRemovePlayer(id) {
 
         players.push(p);
         inp.value = '';
+        ratingInp.value = '';
         currentPhotoBlob = null;
         closePhotoModal();
         sendToQueue(p.id);
@@ -2182,72 +1992,138 @@ function permanentlyRemovePlayer(id) {
     }
 
     function autoMatchmake() {
-        if (waitingQueue.length < 4) return alert("Need at least 4 players in queue");
-        if (!canStageNewMatch()) return alert("Locked mode: cannot stage more matches than there are courts");
+if (waitingQueue.length < 4) return alert("Need at least 4 players in queue");
+if (!canStageNewMatch()) return alert("Locked mode: cannot stage more matches than there are courts");
 
-        const allFull = courts.length > 0 && courts.every(c => c.status === 'Occupied');
-        if (allFull && !allowStagingWhenFull) return alert("All courts are occupied. Enable 'Unlocked' to prepare next matches while courts are full.");
+const allFull = courts.length > 0 && courts.every(c => c.status === 'Occupied');
+if (allFull && !allowStagingWhenFull) return alert("All courts are occupied. Enable 'Unlocked' to prepare next matches while courts are full.");
 
-        // Map queue IDs back to full player objects and filter invalid entries
-        let queuePool = waitingQueue.map(id => players.find(p => p.id === id)).filter(Boolean);
+// Map queue IDs back to full player objects
+let queuePool = waitingQueue.map(id => players.find(p => p.id === id));
 
-        // Sort by fairness score to establish priority (0 games first, then FIFO)
-        queuePool.sort((a, b) => getPlayerFairnessScore(a).score - getPlayerFairnessScore(b).score);
+// 1. Separate based on freshness to prevent immediate back-to-back fatigue
+let freshPlayers = queuePool.filter(p => !p.justPlayed);
+let tiredPlayers = queuePool.filter(p => p.justPlayed);
 
-        let selectedPlayers = [];
+// 2. Sort by fairness score that accounts for games played, check-in time, idle time, and queue wait.
+const sortByFairness = (a, b) => {
+    const scoreA = getPlayerFairnessScore(a).score;
+    const scoreB = getPlayerFairnessScore(b).score;
+    if (scoreA !== scoreB) return scoreA - scoreB;
+    return (a.queuedAt || 0) - (b.queuedAt || 0);
+};
 
-        if (fairQueueMode) {
-            // FairQ: Strictly Skill-Based Matching around the Anchor
-            // 1. Anchor is the longest-waiting player (or newcomer)
-            const anchor = queuePool[0];
-            selectedPlayers.push(anchor);
+freshPlayers.sort(sortByFairness);
+tiredPlayers.sort(sortByFairness);
 
-            // 2. Find 3 others closest in skill rating
-            const remainingPool = queuePool.slice(1);
-            remainingPool.sort((a, b) => {
-                const diffA = Math.abs((a.ratingValue || 0) - (anchor.ratingValue || 0));
-                const diffB = Math.abs((b.ratingValue || 0) - (anchor.ratingValue || 0));
-                if (diffA !== diffB) return diffA - diffB;
-                // If skill diff is same, prioritize wait time
-                return getPlayerFairnessScore(a).score - getPlayerFairnessScore(b).score;
-            });
+// Combine pool prioritizing fresh players, but keep tired players available as backup
+let primarySourcePool = freshPlayers.length >= 4 ? freshPlayers : [...freshPlayers, ...tiredPlayers];
+if (primarySourcePool.length < 4) return alert("Insufficient pool assets.");
 
-            selectedPlayers.push(...remainingPool.slice(0, 3));
-        } else {
-            // Default: Strictly Fair Rotation (FIFO)
-            // 1. Take the top 4 based on rotation priority
-            selectedPlayers = queuePool.slice(0, 4);
-            let selectedIds = selectedPlayers.map(p => p.id);
+// 3. Dynamic Sampling Window: Grab up to the top 6 longest-waiting players
+// This ensures a deeper pool to scramble from, even with small turnouts
+let sampleSize = Math.min(primarySourcePool.length, 6);
+let candidates = primarySourcePool.slice(0, sampleSize);
 
-            // 2. Check for exact 4-player lineup repeat
-            const signature = getMatchSignature(selectedIds);
-            const isRepeat = matchHistory.some(h => h.playerIds && getMatchSignature(h.playerIds) === signature);
+let selectedPlayers;
 
-            if (isRepeat) {
-                if (queuePool.length >= 6) {
-                    // Swap at least 2 players (the 3rd and 4th) with the next 2 in line
-                    selectedPlayers = [queuePool[0], queuePool[1], queuePool[4], queuePool[5]];
-                } else if (queuePool.length >= 5) {
-                    // If only 5 available, swap at least 1 (the 4th)
-                    selectedPlayers = [queuePool[0], queuePool[1], queuePool[2], queuePool[4]];
-                }
+// First, if Fair Queue mode is enabled, try to select using fair ordering
+if (fairQueueMode) {
+    const fairCandidates = shuffleWaitingQueueFair(candidates);
+    selectedPlayers = chooseLowestOverlapWindow(fairCandidates, 4);
+    if (!selectedPlayers || selectedPlayers.length < 4) {
+        selectedPlayers = chooseLowestOverlapWindow(fairCandidates, 4);
+    }
+}
+
+// If fair selection didn't succeed, fall back to previous logic
+if (!selectedPlayers || selectedPlayers.length < 4) {
+    if (gameTimeMode || rtMode) {
+        // Choose 4 players who are closest together by winrate/rating so we can
+        // form competitive matches.
+        selectedPlayers = chooseClosestWinrateGroup(candidates, 4, true);
+        // fallback to the best window if a unique lineup is unavailable
+        if (!selectedPlayers || selectedPlayers.length < 4) {
+            selectedPlayers = chooseClosestWinrateGroup(candidates, 4, false) || candidates.slice(0, 4);
+        }
+    } else {
+        // 4. Attempt several random mixes and prefer groups with low overlap penalty
+        let bestCandidate = null;
+        let bestScore = Infinity;
+        for (let attempt = 0; attempt < STRICT_ATTEMPTS; attempt++) {
+            const shuffled = [...candidates];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            const candidateGroup = shuffled.slice(0, 4);
+            const ids = candidateGroup.map(p => p.id);
+            const penalty = computeOverlapPenalty(ids);
+            const rates = candidateGroup.map(p => getWinRate(p));
+            const range = Math.max(...rates) - Math.min(...rates);
+            const combinedScore = (penalty.score * PENALTY_WEIGHT) + range;
+
+            // If this candidate has an acceptable overlap, pick it immediately
+            if (penalty.maxCommon <= MAX_ALLOWED_OVERLAP && penalty.score === 0) {
+                selectedPlayers = candidateGroup;
+                break;
+            }
+
+            if (combinedScore < bestScore) {
+                bestScore = combinedScore;
+                bestCandidate = candidateGroup;
             }
         }
 
-        const selectedIds = selectedPlayers.map(p => p.id);
-
-        // Update global queue structures and player states
-        waitingQueue = waitingQueue.filter(id => !selectedIds.includes(id));
-        selectedPlayers.forEach(p => p.status = 'Staged');
-
-        // Build the match deck using current pairing mode (GMT/RT/etc)
-        const match = buildMatchFromSelected(selectedPlayers);
-        upNextDeck.push(match);
-
-        saveToStorage();
-        renderSystem();
+        // Prefer a winrate-close group that also avoids repeats when possible
+        if (!selectedPlayers || selectedPlayers.length < 4) {
+            selectedPlayers = chooseClosestWinrateGroup(candidates, 4, true);
+        }
+        if (!selectedPlayers || selectedPlayers.length < 4) {
+            selectedPlayers = bestCandidate || getRandomSample(candidates, 4);
+        }
     }
+}
 
+// 5. Update global queue structures and player states
+const selectedIds = selectedPlayers.map(p => p.id);
+waitingQueue = waitingQueue.filter(id => !selectedIds.includes(id));
+selectedPlayers.forEach(p => p.status = 'Staged');
+
+// 6. Build the match deck using current pairing mode
+const match = buildMatchFromSelected(selectedPlayers);
+upNextDeck.push(match);
+
+saveToStorage();
+renderSystem();
+}
+
+    // Pick a contiguous group of `size` players from `pool` (array of player objects)
+    // that has the smallest winrate/rating range. Returns array of length `size` or []
+    function chooseClosestWinrateGroup(pool, size, avoidPlayed = false) {
+        if (!Array.isArray(pool) || pool.length < size) return [];
+        // Sort by winrate or rating descending
+        const sorted = [...pool].sort((a,b) => {
+            if (rtMode) return b.ratingValue - a.ratingValue;
+            return getWinRate(b) - getWinRate(a);
+        });
+        let best = null;
+        let bestRange = Infinity;
+        for (let i = 0; i <= sorted.length - size; i++) {
+            const slice = sorted.slice(i, i + size);
+            if (avoidPlayed) {
+                const pen = computeOverlapPenalty(slice.map(p => p.id));
+                if (pen.maxCommon > MAX_ALLOWED_OVERLAP) continue;
+            }
+            const rates = slice.map(p => rtMode ? p.ratingValue : getWinRate(p));
+            const range = Math.max(...rates) - Math.min(...rates);
+            if (range < bestRange) {
+                bestRange = range;
+                best = slice;
+            }
+        }
+        return best || [];
+    }
 
     function getMatchSignature(ids) {
         return ids.slice().sort((a, b) => a - b).join(',');
@@ -2652,10 +2528,13 @@ if (p.idleStartedAt) {
 p.status = 'Queued';
 p.justPlayed = false;
 
-// FIFO logic for returning from Idle:
-// Put them at the end of the current 'Queued' line,
-// which means their queuedAt should be Date.now().
-p.queuedAt = Date.now();
+if (waitingQueue.length >= 4) {
+    let basePool = waitingQueue.map(qId => players.find(x => x.id === qId));
+    basePool.sort((a, b) => (a.queuedAt || 0) - (b.queuedAt || 0));
+    p.queuedAt = (basePool[3].queuedAt || Date.now()) + 1;
+} else {
+    p.queuedAt = Date.now() - 3600000;
+}
 
 waitingQueue.push(id);
 saveToStorage();
@@ -2713,11 +2592,9 @@ saveToStorage();
 renderSystem();
 }
 
-async function checkOutAllPlayers() {
+function checkOutAllPlayers() {
     if (players.length === 0) return alert("No active players to check out.");
     if (!confirm("Are you sure you want to check out all remaining active players to end open play?")) return;
-
-    await processAwards();
 
     // Use a modified version of removal that skips internal confirms
     const now = Date.now();
@@ -2773,126 +2650,121 @@ async function checkOutAllPlayers() {
     }
 
     function executeExport(type) {
-        closeExportModal();
-        const exportDate = new Date().toLocaleDateString();
-        const exportTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+closeExportModal();
+const exportDate = new Date().toLocaleDateString();
 
-        // Ensure everyone is included: active players, archived/checked-out players
-        const completeRoster = [...players, ...archivedPlayers];
+// Ensure everyone is included: active players, archived/checked-out players
+const completeRoster = [...players, ...archivedPlayers];
 
-        let waitMap = {};
-        // Initialize waitMap for every player in the roster to ensure they appear in the summary
-        completeRoster.forEach(p => {
-            waitMap[p.name] = { total: 0, count: 0 };
+let waitMap = {};
+// Initialize waitMap for every player in the roster to ensure they appear in the summary
+completeRoster.forEach(p => {
+    waitMap[p.name] = { total: 0, count: 0 };
+});
+
+matchHistory.forEach(h => {
+    if (h.waitData) {
+        h.waitData.forEach(pWait => {
+            if (!waitMap[pWait.name]) waitMap[pWait.name] = { total: 0, count: 0 };
+            waitMap[pWait.name].total += pWait.waitTime;
+            waitMap[pWait.name].count += 1;
         });
-
-        matchHistory.forEach(h => {
-            if (h.waitData) {
-                h.waitData.forEach(pWait => {
-                    if (!waitMap[pWait.name]) waitMap[pWait.name] = { total: 0, count: 0 };
-                    waitMap[pWait.name].total += pWait.waitTime;
-                    waitMap[pWait.name].count += 1;
-                });
-            }
-        });
-
-        const waitAverages = Object.keys(waitMap).map(name => ({
-            name,
-            avg: waitMap[name].count > 0 ? Math.round(waitMap[name].total / waitMap[name].count) : 0,
-            count: waitMap[name].count
-        })).sort((a,b) => b.avg - a.avg);
-
-        // Helper function to pull structural idle times safely
-        function getIdleDurationMin(p) {
-            let cumulative = p.totalIdleMs || 0;
-            if (p.status === 'Idle' && p.idleStartedAt) {
-                cumulative += (Date.now() - p.idleStartedAt);
-            }
-            return Math.round(cumulative / 60000);
-        }
-
-        // Adjusted dynamic venue time helper logic: (Check Out Epoch - Check In Epoch) - Idle Duration
-        function getVenueDurationMin(p) {
-            const endPoint = p.checkOutEpoch ? p.checkOutEpoch : Date.now();
-            const absoluteDurationMs = endPoint - (p.checkInEpoch || Date.now());
-            const totalIdleMs = (p.totalIdleMs || 0) + ((p.status === 'Idle' && p.idleStartedAt) ? (Date.now() - p.idleStartedAt) : 0);
-            const venueActiveDurationMs = absoluteDurationMs - totalIdleMs;
-            return Math.max(0, Math.round(venueActiveDurationMs / 60000));
-        }
-
-        if (type === 'excel') {
-            let csvRows = [];
-            csvRows.push(`JA1 Court Manager - Session Summary (${exportDate} ${exportTime})`);
-            csvRows.push("");
-
-            csvRows.push("PLAYER STATISTICS");
-            csvRows.push("Name,Status,Games Played,Wins,Losses,Win Rate (%),Idle Min,Venue Active Min,Check In,Check Out");
-            completeRoster.sort((a,b) => getWinRate(b) - getWinRate(a)).forEach(p => {
-                csvRows.push(`"${p.name}","${p.status}",${p.games},${p.wins},${p.games-p.wins},${getWinRate(p)}%,${getIdleDurationMin(p)},${getVenueDurationMin(p)},"${p.checkInTime}","${p.checkOutTime}"`);
-            });
-            csvRows.push("");
-
-            csvRows.push("WAIT TIME ANALYSIS");
-            csvRows.push("Player Name,Total Matches,Avg Wait Per Match (min)");
-            waitAverages.forEach(w => csvRows.push(`"${w.name}",${w.count},${w.avg}`));
-            csvRows.push("");
-
-            csvRows.push("SESSION MATCH HISTORY");
-            csvRows.push("Time,Court,Team 1,Team 2,Winner,Duration (min),Player Wait Times");
-            matchHistory.forEach(h => {
-                csvRows.push(`"${h.timestamp}","${h.court}","${h.team1}","${h.team2}","${h.winner}",${h.duration},"${h.playerWaits}"`);
-            });
-
-            const csvString = csvRows.join("\n");
-            const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement("a");
-            link.setAttribute("href", URL.createObjectURL(blob));
-            link.setAttribute("download", `JA1_Session_${exportDate.replace(/\//g,'-')}.csv`);
-            link.click();
-        } else {
-            const printWindow = window.open('', '_blank');
-            let html = `<html><head><title>JA1 Session Summary ${exportDate}</title><style>
-                body { font-family: 'Plus Jakarta Sans', sans-serif; padding: 40px; color: #1e293b; background: white; }
-                h1 { color: #0f172a; font-size: 24px; border-bottom: 4px solid #10b981; padding-bottom: 10px; margin-bottom: 30px; }
-                h2 { color: #334155; font-size: 18px; margin-top: 40px; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 0.05em; }
-                table { width: 100%; border-collapse: collapse; margin-bottom: 30px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-                th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #e2e8f0; font-size: 12px; }
-                th { background-color: #f8fafc; color: #64748b; font-weight: 700; text-transform: uppercase; font-size: 10px; }
-                tr:nth-child(even) { background-color: #fcfcfc; }
-                .winrate { font-weight: 700; color: #059669; }
-                .meta { color: #64748b; font-size: 12px; margin-bottom: 20px; }
-            </style></head><body>`;
-
-            html += `<h1>JA1 Court Manager Session Summary</h1>`;
-            html += `<div class="meta">Date: ${exportDate} | Time: ${exportTime} | Matches: ${matchHistory.length}</div>`;
-
-            html += `<h2>Player Leaderboard & Efficiency</h2><table><thead><tr><th>Name</th><th>Status</th><th>Games</th><th>Wins</th><th>Winrate</th><th>Idle</th><th>Active</th><th>In</th><th>Out</th></tr></thead><tbody>`;
-            completeRoster.sort((a,b) => getWinRate(b) - getWinRate(a)).forEach(p => {
-                html += `<tr><td><b>${p.name}</b></td><td>${p.status}</td><td>${p.games}</td><td>${p.wins}</td><td class="winrate">${getWinRate(p)}%</td><td>${getIdleDurationMin(p)}m</td><td>${getVenueDurationMin(p)}m</td><td>${p.checkInTime}</td><td>${p.checkOutTime}</td></tr>`;
-            });
-            html += `</tbody></table>`;
-
-            html += `<h2>Average Wait Times</h2><table><thead><tr><th>Player Name</th><th>Total Games</th><th>Avg Minutes Waiting Per Match</th></tr></thead><tbody>`;
-            waitAverages.forEach(w => html += `<tr><td>${w.name}</td><td>${w.count}</td><td>${w.avg} min</td></tr>`);
-            html += `</tbody></table>`;
-
-            html += `<h2>Full Match Log</h2><table><thead><tr><th>Time</th><th>Court</th><th>Matchup</th><th>Winner</th><th>Dur</th><th>Player Waits</th></tr></thead><tbody>`;
-            matchHistory.forEach(h => {
-                html += `<tr><td>${h.timestamp}</td><td>${h.court}</td><td>${h.team1} vs ${h.team2}</td><td>${h.winner}</td><td>${h.duration}m</td><td style="font-size: 9px; color: #64748b;">${h.playerWaits}</td></tr>`;
-            });
-            html += `</tbody></table></body></html>`;
-
-            printWindow.document.write(html);
-            printWindow.document.close();
-            setTimeout(() => printWindow.print(), 500);
-        }
     }
+});
+
+const waitAverages = Object.keys(waitMap).map(name => ({
+    name,
+    avg: waitMap[name].count > 0 ? Math.round(waitMap[name].total / waitMap[name].count) : 0
+})).sort((a,b) => b.avg - a.avg);
+
+// Helper function to pull structural idle times safely
+function getIdleDurationMin(p) {
+    let cumulative = p.totalIdleMs || 0;
+    if (p.status === 'Idle' && p.idleStartedAt) {
+        cumulative += (Date.now() - p.idleStartedAt);
+    }
+    return Math.round(cumulative / 60000);
+}
+
+// Adjusted dynamic venue time helper logic: (Check Out Epoch - Check In Epoch) - Idle Duration
+function getVenueDurationMin(p) {
+    const endPoint = p.checkOutEpoch ? p.checkOutEpoch : Date.now();
+    const absoluteDurationMs = endPoint - p.checkInEpoch;
+    const totalIdleMs = (p.totalIdleMs || 0) + ((p.status === 'Idle' && p.idleStartedAt) ? (Date.now() - p.idleStartedAt) : 0);
+    const venueActiveDurationMs = absoluteDurationMs - totalIdleMs;
+    return Math.max(0, Math.round(venueActiveDurationMs / 60000));
+}
+
+if (type === 'excel') {
+    let csvRows = [];
+    csvRows.push(`Open Play (${exportDate}) Summary`);
+    csvRows.push(`Exported at: ${new Date().toLocaleString()}`);
+    csvRows.push("");
+
+    csvRows.push("PLAYER ROSTER & STATS");
+    // Added 'Idle Duration (min)' and 'Total Venue Time (min)' columns
+    csvRows.push("Name,Games Played,Wins,Losses,Win Rate (%),Idle Duration (min),Total Venue Time (min),Check In,Check Out");
+    completeRoster.sort((a,b) => getWinRate(b) - getWinRate(a)).forEach(p => {
+        csvRows.push(`"${p.name}",${p.games},${p.wins},${p.games-p.wins},${getWinRate(p)}%,${getIdleDurationMin(p)},${getVenueDurationMin(p)},"${p.checkInTime}","${p.checkOutTime}"`);
+    });
+    csvRows.push("");
+
+    csvRows.push("AVERAGE WAITING TIME ANALYSIS");
+    csvRows.push("Player Name,Avg Wait (min)");
+    waitAverages.forEach(w => csvRows.push(`"${w.name}",${w.avg}`));
+    csvRows.push("");
+
+    csvRows.push("COMPLETE MATCH LOG");
+    csvRows.push("Time,Court,Team 1,Team 2,Winner,Duration (min)");
+    matchHistory.forEach(h => {
+        csvRows.push(`"${h.timestamp}","${h.court}","${h.team1}","${h.team2}","${h.winner}",${h.duration}`);
+    });
+
+    const csvString = csvRows.join("\n");
+    const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    link.setAttribute("href", URL.createObjectURL(blob));
+    link.setAttribute("download", `PickleQ_${exportDate.replace(/\//g,'-')}.csv`);
+    link.click();
+} else {
+    const printWindow = window.open('', '_blank');
+    let html = `<html><head><title>Summary ${exportDate}</title><style>
+        body { font-family: sans-serif; padding: 20px; color: #333; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 25px; }
+        th, td { border: 1px solid #ddd; padding: 6px; text-align: left; font-size: 11px; }
+        th { background-color: #f8fafc; color: #64748b; text-transform: uppercase; }
+        h2 { color: #059669; border-bottom: 2px solid #059669; padding-bottom: 5px; font-size: 16px; }
+    </style></head><body>`;
+
+    html += `<h1>Open Play (${exportDate}) Summary</h1><p>Generated: ${new Date().toLocaleString()}</p>`;
+
+    // Added columns to HTML UI print preview context maps
+    html += `<h2>Average Wait Times</h2><table><thead><tr><th>Player Name</th><th>Avg Minutes Waiting Per Match</th></tr></thead><tbody>`;
+    waitAverages.forEach(w => html += `<tr><td>${w.name}</td><td>${w.avg} min</td></tr>`);
+    html += `</tbody></table>`;
+
+    html += `<h2>Player Leaderboard</h2><table><thead><tr><th>Name</th><th>Games</th><th>Wins</th><th>Winrate</th><th>Total Idle Time</th><th>Venue Duration</th><th>Check In</th><th>Check Out</th></tr></thead><tbody>`;
+    completeRoster.sort((a,b) => getWinRate(b) - getWinRate(a)).forEach(p => {
+        html += `<tr><td>${p.name}</td><td>${p.games}</td><td>${p.wins}</td><td>${getWinRate(p)}%</td><td>${getIdleDurationMin(p)} min</td><td>${getVenueDurationMin(p)} min</td><td>${p.checkInTime}</td><td>${p.checkOutTime}</td></tr>`;
+    });
+    html += `</tbody></table>`;
+
+    html += `<h2>Match History</h2><table><thead><tr><th>Time</th><th>Court</th><th>Matchup</th><th>Winner</th><th>Dur</th></tr></thead><tbody>`;
+    matchHistory.forEach(h => {
+        html += `<tr><td>${h.timestamp}</td><td>${h.court}</td><td>${h.team1} vs ${h.team2}</td><td>${h.winner}</td><td>${h.duration}m</td></tr>`;
+    });
+    html += `</tbody></table></body></html>`;
+
+    printWindow.document.write(html);
+    printWindow.document.close();
+    setTimeout(() => printWindow.print(), 500);
+}
+}
 
     // --- LIFE-CYCLE INIT ---
-    loadFromStorage().then(() => {
-        applyThemeClasses();
-        renderSystem();
-    });
+    loadFromStorage();
+    applyThemeClasses();
+    renderSystem();
 
     // Fixed logic: Pause automatic court re-renders while any court is in "Edit Mode"
     setInterval(() => {

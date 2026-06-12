@@ -1,12 +1,11 @@
-const CACHE_NAME = 'ja1-court-manager-v2';
+const CACHE_NAME = 'ja1-court-manager-v1';
 const ASSETS = [
-  './',
   'index.html',
   'logo.jpg',
   'manifest.json',
-  'vendor/tailwind.min.js',
-  'vendor/dexie.js',
-  'vendor/all.min.css'
+  'https://cdn.tailwindcss.com',
+  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css',
+  'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap'
 ];
 
 self.addEventListener('install', (event) => {
