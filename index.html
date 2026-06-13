@@ -1,0 +1,2933 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JA1 Court Manager</title>
+    <!-- iOS PWA Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="JA1 Court">
+    <link rel="apple-touch-icon" href="logo.jpg">
+
+    <script src="vendor/tailwind.min.js"></script>
+    <script src="vendor/dexie.js"></script>
+    <link href="vendor/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght=400;600;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; transition: background-color 0.3s ease, color 0.3s ease; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+        .win-gradient { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+        @media print { .no-print { display: none; } }
+        /* Custom Export Modal Style */
+        #export-modal { backdrop-filter: blur(4px); }
+        /* Smooth Button Clicks */
+        button:active { transform: scale(0.96); opacity: 0.9; }
+        button { transition: all 0.1s ease; }
+    </style>
+</head>
+<body class="antialiased pb-20 bg-slate-900 text-slate-100 dark-mode">
+
+<div id="guide-modal" class="fixed inset-0 z-[130] hidden flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-3xl max-w-lg w-full shadow-2xl overflow-hidden flex flex-col max-h-[80vh]">
+        <div class="p-6 border-b border-slate-800 flex justify-between items-center text-center relative">
+            <h3 class="text-xl font-bold text-white w-full">App Guidelines</h3>
+            <button onclick="closeGuide()" class="text-slate-400 hover:text-white absolute right-6"><i class="fas fa-times text-xl"></i></button>
+        </div>
+        <div class="p-6 overflow-y-auto custom-scrollbar space-y-6 text-sm text-slate-300">
+            <div>
+                <h4 class="text-emerald-500 font-bold uppercase text-[10px] mb-2 tracking-widest">1. Matchmaking Modes</h4>
+                <div class="space-y-2">
+                    <p>• <b>Default (FIFO)</b>: Strictly follows arrival order (longest wait first). Ensures newcomers (0 games) play first and strictly avoids immediate 4-player repeat lineups by swapping players if needed.</p>
+                    <p>• <b>FairQ ON</b>: Matches players based on skill level. It takes the longest-waiting player (Anchor) and finds 3 others in the queue with the closest skill ratings.</p>
+                    <p>• <b>GMT ON</b>: Prioritizes competitive matchups. Pairs Top 1 & 2 vs Top 3 & 4.</p>
+                    <p>• <b>RT ON</b>: Uses skill levels defined by dots. Pairs Advance with Beginner vs Advance with Beginner (Rank 1 & 4 vs Rank 2 & 3).</p>
+                    <p class="ml-4">• 1 Dot: Beginner (2.0)</p>
+                    <p class="ml-4">• 2 Dots: Novice (3.0)</p>
+                    <p class="ml-4">• 3 Dots: Intermediate (3.5)</p>
+                    <p class="ml-4">• 4 Dots: Advanced (4.5)</p>
+                </div>
+            </div>
+            <div>
+                <h4 class="text-emerald-500 font-bold uppercase text-[10px] mb-2 tracking-widest">2. Player Management</h4>
+                <div class="space-y-3">
+                    <p>• <b>Profiles</b>: Tap any player in the roster to view all-time vs session stats, change photos, or update skill ratings.</p>
+                    <p>• <b>Idle Mode</b>: Tap the <i class="fas fa-coffee mx-1 text-amber-500"></i> icon to pause a player's wait time without checking them out. Perfect for breaks.</p>
+                    <p>• <b>Check-In</b>: New players are added via the top bar. You can search the Global DB to pull existing players into a new session.</p>
+                </div>
+            </div>
+
+            <div>
+                <h4 class="text-emerald-500 font-bold uppercase text-[10px] mb-2 tracking-widest">3. Court Operations</h4>
+                <div class="space-y-3">
+                    <p>• <b>Staging</b>: Matches are first created in the "Up Next Deck". This allows you to review and <b>Shuffle</b> or <b>Edit</b> lineups before they go live.</p>
+                    <p>• <b>Auto-Fill</b>: By default, you must explicitly confirm a staged match to a court. Toggle "Locked/Unlocked" to manage staging capacity.</p>
+                    <p>• <b>Live Edits</b>: Need to swap a player mid-game? Use "Change / Auto Replace" on any occupied court.</p>
+                </div>
+            </div>
+
+            <div>
+                <h4 class="text-emerald-500 font-bold uppercase text-[10px] mb-2 tracking-widest">4. Session & Data</h4>
+                <div class="space-y-3">
+                    <p>• <b>Export</b>: "Export Summary" generates a professional CSV or PDF containing leaderboards, wait time analysis, and full match logs.</p>
+                    <p>• <b>Reset</b>: Use "RESET SYSTEM" only at the end of a major event. It clears local session data but preserves the Global Player Database.</p>
+                    <p>• <b>Sync</b>: The app works 100% offline. Data syncs to the global cloud automatically when a connection is detected.</p>
+                </div>
+            </div>
+            <div>
+                <h4 class="text-emerald-500 font-bold uppercase text-[10px] mb-2 tracking-widest">5. iOS Installation</h4>
+                <div class="space-y-3">
+                    <p>• <b>Add to Home Screen</b>: Open this link in <b>Safari</b>, tap the <b>Share</b> icon (square with arrow), and select <b>"Add to Home Screen"</b> for a full-screen app experience.</p>
+                    <p>• <b>Offline Use</b>: Once added, the app works entirely offline. All data is saved locally to your device.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="global-stats-modal" class="fixed inset-0 z-[130] hidden flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-3xl max-w-4xl w-full shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+        <div class="p-6 border-b border-slate-800 flex justify-between items-center">
+            <h3 class="text-xl font-bold text-white">Global Player Stats</h3>
+            <button onclick="closeGlobalStats()" class="text-slate-400 hover:text-white transition"><i class="fas fa-times text-xl"></i></button>
+        </div>
+
+        <!-- Tabs and Filter -->
+        <div class="bg-slate-800/50 p-4 border-b border-slate-700 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex gap-6 text-sm">
+                <button onclick="setStatsTab('leaderboard')" id="tab-leaderboard" class="stats-tab-active py-1">Leaderboard</button>
+                <button onclick="setStatsTab('awards')" id="tab-awards" class="stats-tab-inactive py-1">Awards</button>
+            </div>
+            <div class="flex items-center gap-2">
+                <label class="text-[10px] uppercase font-bold text-slate-500">Filter Skill:</label>
+                <select id="stats-skill-filter" onchange="renderGlobalStatsTable()" class="bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-xs text-white outline-none">
+                    <option value="all">All Levels</option>
+                    <option value="2.0">Beginner</option>
+                    <option value="3.0">Novice</option>
+                    <option value="3.5">Intermediate</option>
+                    <option value="4.5">Advanced</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="p-4 overflow-y-auto custom-scrollbar flex-1">
+            <table class="w-full text-left border-separate border-spacing-y-2">
+                <thead>
+                    <tr class="text-[10px] uppercase tracking-widest text-slate-500">
+                        <th class="px-4 py-2 cursor-pointer" onclick="setStatsSort('name')">Player <i class="fas fa-sort ml-1"></i></th>
+                        <th class="px-4 py-2 cursor-pointer" onclick="setStatsSort('winrate')">Winrate <i class="fas fa-sort ml-1"></i></th>
+                        <th class="px-4 py-2 cursor-pointer" onclick="setStatsSort('games')">Games <i class="fas fa-sort ml-1"></i></th>
+                        <th class="px-4 py-2 cursor-pointer" onclick="setStatsSort('wins')">Wins <i class="fas fa-sort ml-1"></i></th>
+                        <th class="px-4 py-2">Frequency</th>
+                        <th class="px-4 py-2 text-right">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="global-stats-body" class="text-sm">
+                    <!-- Loaded dynamically -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div id="recent-players-modal" class="fixed inset-0 z-[130] hidden flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-3xl max-w-md w-full shadow-2xl overflow-hidden flex flex-col max-h-[80vh]">
+        <div class="p-6 border-b border-slate-800 flex justify-between items-center text-center relative">
+            <h3 class="text-xl font-bold text-white w-full">Quick Add Recent Players</h3>
+            <button onclick="closeRecentPlayers()" class="text-slate-400 hover:text-white absolute right-6 transition"><i class="fas fa-times text-xl"></i></button>
+        </div>
+        <!-- Multi-select controls -->
+        <div class="bg-slate-800/50 p-4 border-b border-slate-700 flex justify-between items-center">
+            <label class="flex items-center gap-2 cursor-pointer group">
+                <input type="checkbox" id="select-all-recent" onchange="toggleSelectAllRecent(this.checked)" class="w-4 h-4 rounded border-slate-600 bg-slate-700 text-emerald-500 focus:ring-emerald-500 accent-emerald-500">
+                <span class="text-xs font-bold text-slate-300 group-hover:text-white transition">Select All</span>
+            </label>
+            <button onclick="addSelectedRecentPlayers()" class="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold px-4 py-2 rounded-xl transition text-xs flex items-center gap-2">
+                <i class="fas fa-plus"></i> Add Selected
+            </button>
+        </div>
+        <div class="p-4 overflow-y-auto custom-scrollbar flex-1 space-y-2" id="recent-players-list">
+            <!-- Loaded dynamically -->
+        </div>
+    </div>
+</div>
+
+<div id="player-profile-modal" class="fixed inset-0 z-[120] hidden flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-3xl max-w-sm w-full shadow-2xl overflow-hidden flex flex-col">
+        <div class="p-6 text-center relative">
+            <button onclick="closePlayerProfile()" class="absolute top-4 right-4 text-slate-400 hover:text-white transition">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+
+            <!-- Photo & Name -->
+            <div class="relative w-24 h-24 mx-auto mb-4 group">
+                <img id="modal-profile-img" src="logo.jpg" class="w-full h-full rounded-full object-cover border-2 border-emerald-500/30">
+                <button onclick="showPhotoModalFromProfile()" class="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition">
+                    <i class="fas fa-camera text-white"></i>
+                </button>
+            </div>
+            <h3 id="modal-player-name" class="text-xl font-bold text-white mb-1">Player Name</h3>
+            <div id="modal-player-rating-badge" class="inline-block px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-500 text-[10px] font-black uppercase tracking-tighter mb-2">Intermediate</div>
+
+            <!-- Awards Row -->
+            <div id="modal-player-awards" class="flex justify-center gap-2 mt-2">
+                <!-- Medals loaded here -->
+            </div>
+        </div>
+
+        <div class="bg-slate-800/50 p-6 space-y-6">
+            <!-- Stats Grid -->
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-slate-900/50 border border-slate-700/50 p-3 rounded-2xl">
+                    <div class="text-[10px] text-slate-500 uppercase font-bold mb-1">Today's Stats</div>
+                    <div id="modal-session-stats" class="text-sm font-bold text-slate-200">0W / 0L (0%)</div>
+                </div>
+                <div class="bg-slate-900/50 border border-slate-700/50 p-3 rounded-2xl">
+                    <div class="text-[10px] text-slate-500 uppercase font-bold mb-1">All-Time Stats</div>
+                    <div id="modal-global-stats" class="text-sm font-bold text-emerald-500">0W / 0L (0%)</div>
+                </div>
+            </div>
+
+            <!-- Edit Rating -->
+            <div>
+                <label class="text-[10px] text-slate-500 uppercase font-bold mb-2 block ml-1">Update Skill Level</label>
+                <select id="modalPlayerRating" class="w-full bg-slate-900 border border-slate-700 p-3 rounded-xl text-sm text-white outline-none focus:ring-2 focus:ring-emerald-500 transition">
+                    <option value="2.0">Beginner</option>
+                    <option value="3.0">Novice</option>
+                    <option value="3.5">Intermediate</option>
+                    <option value="4.5">Advanced</option>
+                </select>
+            </div>
+
+            <button onclick="saveProfileChanges()" class="w-full py-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-2xl transition shadow-lg shadow-emerald-500/20">
+                Save Changes
+            </button>
+        </div>
+    </div>
+</div>
+
+<div id="photo-modal" class="fixed inset-0 z-[110] hidden flex items-center justify-center bg-slate-950/90 p-4">
+    <div class="bg-slate-900 border border-slate-700 p-6 rounded-3xl max-w-sm w-full shadow-2xl text-center">
+        <h3 id="photo-modal-title" class="text-lg font-bold mb-4">Add Player Photo</h3>
+        <div class="relative w-48 h-48 mx-auto mb-6 bg-slate-800 rounded-2xl overflow-hidden border-2 border-dashed border-slate-600 flex items-center justify-center">
+            <video id="camera-preview" class="absolute inset-0 w-full h-full object-cover hidden" autoplay playsinline></video>
+            <img id="photo-preview" class="absolute inset-0 w-full h-full object-cover hidden" src="" alt="Preview">
+            <div id="camera-placeholder" class="text-slate-500 flex flex-col items-center">
+                <i class="fas fa-camera text-4xl mb-2"></i>
+                <span class="text-[10px] uppercase font-bold">Preview</span>
+            </div>
+        </div>
+        <div class="flex flex-col gap-3">
+            <div class="flex gap-2">
+                <button id="start-camera" onclick="startCamera()" class="flex-1 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl transition flex items-center justify-center gap-2">
+                    <i class="fas fa-camera"></i> Open Camera
+                </button>
+                <button id="capture-photo" onclick="capturePhoto()" class="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition hidden flex items-center justify-center gap-2">
+                    <i class="fas fa-circle"></i> Capture
+                </button>
+            </div>
+            <input type="file" id="file-input" accept="image/*" class="hidden" onchange="handleFileSelect(event)">
+            <button onclick="document.getElementById('file-input').click()" class="w-full py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-xl transition">
+                <i class="fas fa-file-upload mr-1"></i> Gallery
+            </button>
+            <div id="edit-rating-container" class="hidden">
+                <select id="editPlayerRating" class="w-full bg-slate-800 border border-slate-600 p-3 rounded-xl text-sm text-white outline-none">
+                    <option value="">Update Rating...</option>
+                    ${RATING_LEVELS.map(r => `<option value="${r.value}">${r.label}</option>`).join('')}
+                </select>
+            </div>
+            <div class="flex gap-2">
+                <button id="photo-done-btn" onclick="savePhotoEdit()" class="flex-1 py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl transition hidden">
+                    Done
+                </button>
+                <button onclick="closePhotoModal()" class="flex-1 py-3 bg-slate-700 hover:bg-slate-600 text-slate-300 font-bold rounded-xl transition">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<nav class="bg-slate-800/80 dark:bg-slate-950/80 border-b border-slate-700 dark:border-slate-800 backdrop-blur-md sticky top-0 z-50 px-2 sm:px-4 py-3 transition-colors no-print">
+    <div class="max-w-7xl mx-auto flex flex-col lg:flex-row justify-between items-center gap-4">
+        <div class="flex flex-col sm:flex-row items-center justify-between w-full lg:w-auto gap-3">
+            <div class="flex items-center justify-between w-full sm:w-auto gap-3">
+                <div class="flex items-center gap-2">
+                    <img src="logo.jpg" alt="JA1 Logo" class="h-8 w-8 rounded-lg object-cover">
+                    <h1 class="text-sm sm:text-base font-bold tracking-tight text-slate-100 dark:text-white whitespace-nowrap">JA1 Court Manager</h1>
+                </div>
+                <button onclick="showGuide()" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-700 hover:bg-slate-600 text-slate-200 transition">
+                    <i class="fas fa-info-circle text-[8px] mr-1"></i> Guide
+                </button>
+            </div>
+            <div class="flex items-center justify-center gap-2 w-full sm:w-auto">
+                <button onclick="showGlobalStats()" class="flex-1 sm:flex-none bg-slate-700 dark:bg-slate-800 hover:bg-slate-600 dark:hover:bg-slate-700 text-slate-200 dark:text-slate-300 px-3 py-2 rounded-xl transition flex items-center justify-center gap-2 text-xs">
+                    <i class="fas fa-users"></i> Global Stats
+                </button>
+                <button onclick="toggleTheme()" class="flex-1 sm:flex-none bg-slate-700 dark:bg-slate-800 hover:bg-slate-600 dark:hover:bg-slate-700 text-slate-200 dark:text-slate-300 px-3 py-2 rounded-xl transition flex items-center justify-center gap-2 text-xs">
+                    <i id="theme-icon" class="fas fa-sun"></i> <span id="theme-text" class="hidden sm:inline">Light</span>
+                </button>
+            </div>
+        </div>
+        <div class="flex gap-2 w-full lg:w-auto">
+            <div class="flex-1 lg:w-48 relative">
+                <input id="newPlayerName" type="text" list="player-suggestions" placeholder="Name..." oninput="handleNameInput(this.value)" class="w-full bg-slate-700 dark:bg-slate-800 border border-slate-600 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 focus:ring-2 focus:ring-emerald-500 outline-none">
+                <datalist id="player-suggestions"></datalist>
+            </div>
+            <button onclick="showRecentPlayers()" class="bg-slate-700 dark:bg-slate-800 hover:bg-slate-600 dark:hover:bg-slate-700 text-slate-200 dark:text-slate-300 px-3 sm:px-4 py-2 rounded-xl transition flex items-center gap-2 text-xs whitespace-nowrap">
+                <i class="fas fa-history"></i> Recent
+            </button>
+            <button onclick="addPlayer()" class="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold px-4 py-2 rounded-xl transition text-sm flex items-center gap-2 whitespace-nowrap">
+                <i class="fas fa-plus"></i> Add
+            </button>
+        </div>
+    </div>
+</nav>
+
+<main class="max-w-7xl mx-auto p-4 space-y-8">
+
+    <section>
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 px-1 gap-4 no-print">
+            <h2 class="text-sm font-bold uppercase tracking-widest text-slate-400 flex items-center gap-2 whitespace-nowrap">
+                    <span class="relative flex h-2 w-2">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    </span>
+                Live Courts
+            </h2>
+            <div class="grid grid-cols-2 xs:grid-cols-2 sm:grid-cols-4 gap-2 w-full sm:w-auto">
+                <button onclick="checkOutAllPlayers()" class="text-[10px] bg-amber-600 hover:bg-amber-700 px-2 py-2 rounded-lg font-bold transition text-white">
+                    <i class="fas fa-sign-out-alt mr-1"></i> Check Out
+                </button>
+                <button onclick="downloadSummary()" class="text-[10px] bg-emerald-600 hover:bg-emerald-700 px-2 py-2 rounded-lg font-bold transition text-white">
+                    <i class="fas fa-file-download mr-1"></i> Export
+                </button>
+                <button onclick="resetAllData()" class="text-[10px] bg-rose-600 hover:bg-rose-700 px-2 py-2 rounded-lg font-bold transition text-white">
+                    <i class="fas fa-trash-alt mr-1"></i> RESET
+                </button>
+                <button onclick="addCourt()" class="text-[10px] bg-slate-800 dark:bg-slate-950 hover:bg-slate-700 dark:hover:bg-slate-900 px-2 py-2 rounded-lg border border-slate-700 dark:border-slate-800 transition text-slate-200">
+                    <i class="fas fa-plus-circle mr-1"></i> ADD COURT
+                </button>
+            </div>
+        </div>
+        <div id="courts-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
+        </div>
+    </section>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 no-print">
+
+        <div class="lg:col-span-8 space-y-8">
+            <div>
+                <div class="flex items-center justify-between mb-4 px-1">
+                    <h3 class="text-sm font-bold uppercase tracking-widest text-slate-400">Up Next Deck</h3>
+                    <div class="flex items-center gap-2">
+                        <button id="upnext-toggle" onclick="toggleUpNextAllow()" class="text-xs bg-slate-800 hover:bg-slate-700 dark:bg-slate-950 dark:hover:bg-slate-900 text-slate-200 border border-slate-700 dark:border-slate-800 px-3 py-1.5 rounded-lg transition flex items-center gap-2">
+                            <i id="upnext-toggle-icon" class="fas fa-lock"></i>
+                            <span id="upnext-toggle-text" class="font-bold">Locked</span>
+                        </button>
+                        <div id="court-select-row" class="hidden ml-2 flex items-center gap-2">
+                            <label for="next-match-court" class="text-[10px] uppercase tracking-widest text-slate-400">Court:</label>
+                            <select id="next-match-court" class="text-xs bg-slate-700 dark:bg-slate-900 border border-slate-600 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-100 outline-none">
+                                <option value="">Auto select available court</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div id="up-next-container" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                </div>
+            </div>
+
+            <div class="flex gap-3">
+                <button onclick="autoMatchmake()" id="auto-match-btn" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-2xl transition flex items-center justify-center gap-2 shadow-lg shadow-blue-900/20">
+                    <i class="fas fa-bolt"></i> Auto Match
+                </button>
+                <button onclick="toggleManualCreator()" id="manual-select-btn" class="flex-1 bg-slate-800 dark:bg-slate-950 hover:bg-slate-700 dark:hover:bg-slate-900 text-slate-200 border border-slate-700 dark:border-slate-800 font-bold py-3 rounded-2xl transition flex items-center justify-center gap-2">
+                    <i class="fas fa-hand-pointer"></i> Manual Select
+                </button>
+            </div>
+
+            <div id="manual-creator" class="hidden bg-slate-800 dark:bg-slate-950 border border-slate-700 dark:border-slate-800 p-4 rounded-2xl">
+                <p class="text-xs text-slate-400 mb-3">Select exactly 4 available players:</p>
+                <div id="manual-selector-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4"></div>
+                <button onclick="createManualMatch()" class="w-full bg-emerald-500 text-slate-950 font-bold py-2 rounded-xl">Confirm Match</button>
+            </div>
+
+            <div class="flex gap-3 mt-4">
+                <button id="game-time-toggle" onclick="toggleGameTimeMode()" class="flex-1 text-xs bg-slate-700 hover:bg-slate-600 py-3 rounded-xl font-bold transition text-slate-200 flex items-center justify-center gap-2" title="Game Time Off">
+                    <i id="game-time-icon" class="fas fa-stopwatch"></i>
+                    <span id="game-time-text">GMT</span>
+                </button>
+                <button id="fairq-toggle" onclick="toggleFairQueueMode()" class="flex-1 text-xs bg-slate-700 hover:bg-slate-600 py-3 rounded-xl font-bold transition text-slate-200 flex items-center justify-center gap-2" title="Fair Queue Off">
+                    <i id="fairq-icon" class="fas fa-balance-scale"></i>
+                    <span id="fairq-text">FairQ</span>
+                </button>
+                <button id="rt-toggle" onclick="toggleRTMode()" class="flex-1 text-xs bg-slate-700 hover:bg-slate-600 py-3 rounded-xl font-bold transition text-slate-200 flex items-center justify-center gap-2" title="RT Mode Off">
+                    <i id="rt-icon" class="fas fa-star"></i>
+                    <span id="rt-text">RT</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="lg:col-span-4 space-y-6">
+            <div class="bg-slate-800 dark:bg-slate-950 border border-slate-700 dark:border-slate-800 rounded-3xl p-5 shadow-xl">
+                <h3 class="text-sm font-bold uppercase tracking-widest text-slate-400 mb-4 flex justify-between">
+                    Roster & Stats <span id="roster-count" class="text-emerald-500 font-mono">0</span>
+                </h3>
+                <div id="roster-container" class="space-y-3 max-h-[600px] overflow-y-auto custom-scrollbar pr-2">
+                </div>
+            </div>
+            <div id="recent-history-card" class="mt-6 bg-slate-800 dark:bg-slate-950 border border-slate-700 dark:border-slate-800 rounded-3xl p-4">
+                <div class="flex items-start justify-between gap-3">
+                    <div>
+                        <h3 class="text-sm font-bold uppercase tracking-widest text-slate-400">Recent Match History</h3>
+                        <p class="text-[11px] text-slate-500 mt-1">Showing the 3 most recent matches.</p>
+                    </div>
+                    <button id="toggle-history-btn" onclick="toggleMatchHistoryPanel()" class="text-xs bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded-lg font-bold transition text-slate-200">
+                        View Match History
+                    </button>
+                </div>
+                <div id="recent-history-preview" class="mt-4 space-y-3"></div>
+            </div>
+            <div id="match-history-panel" class="hidden mt-4 bg-slate-900 border border-slate-700 rounded-3xl p-4 overflow-x-auto">
+                <!-- full match history table renders here -->
+            </div>
+
+            <div id="checked-out-card" class="bg-slate-800 dark:bg-slate-950 border border-slate-700 dark:border-slate-800 rounded-3xl p-5 shadow-xl">
+                <h3 class="text-sm font-bold uppercase tracking-widest text-slate-400 mb-4 flex justify-between">
+                    Checked Out Players <span id="checked-out-count" class="text-rose-500 font-mono">0</span>
+                </h3>
+                <div id="checked-out-container" class="space-y-3 max-h-[400px] overflow-y-auto custom-scrollbar pr-2">
+                </div>
+            </div>
+        </div>
+
+    </div>
+</main>
+
+<div id="export-modal" class="fixed inset-0 z-[140] hidden flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-3xl max-w-sm w-full shadow-2xl overflow-hidden p-6 text-center">
+        <div class="w-16 h-16 bg-emerald-500/20 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4">
+            <i class="fas fa-file-export text-2xl"></i>
+        </div>
+        <h3 class="text-xl font-bold text-white mb-2">Export Session Summary</h3>
+        <p class="text-sm text-slate-400 mb-6">Choose your preferred format for the session leaderboard and match logs.</p>
+
+        <div class="space-y-3">
+            <button onclick="executeExport('pdf')" class="w-full py-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-2xl transition flex items-center justify-center gap-3">
+                <i class="fas fa-file-pdf"></i> Generate PDF Report
+            </button>
+            <button onclick="executeExport('excel')" class="w-full py-4 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-2xl transition flex items-center justify-center gap-3 border border-slate-700">
+                <i class="fas fa-file-csv"></i> Download CSV (Excel)
+            </button>
+            <button onclick="closeExportModal()" class="w-full py-3 text-slate-500 hover:text-slate-300 transition text-sm font-bold">
+                Cancel
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Medal Detail Popup -->
+<div id="medal-detail-modal" class="fixed inset-0 z-[200] hidden flex items-center justify-center bg-slate-950/90 backdrop-blur-md p-4" onclick="closeMedalDetail()">
+    <div class="bg-slate-900 border border-slate-700 rounded-3xl max-w-xs w-full shadow-2xl p-6 text-center space-y-4" onclick="event.stopPropagation()">
+        <div id="medal-detail-icon" class="text-6xl mb-2"></div>
+        <h4 id="medal-detail-title" class="text-xl font-bold text-white">Medal Title</h4>
+        <div id="medal-detail-date" class="text-xs text-slate-500 uppercase font-bold tracking-widest">Date</div>
+        <div class="bg-slate-800/50 p-4 rounded-2xl border border-slate-700/50">
+            <div class="text-[10px] text-slate-500 uppercase font-bold mb-2">Session Stats</div>
+            <div id="medal-detail-stats" class="text-lg font-bold text-emerald-500">0W / 0L</div>
+        </div>
+        <button onclick="closeMedalDetail()" class="w-full py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl transition">Close</button>
+    </div>
+</div>
+
+<script>
+    // --- DATABASE LAYER (Dexie.js) ---
+    const db = new Dexie("CourtManagerDB");
+    db.version(3).stores({
+        players: "++id, &name, photoBlob",
+        matchHistory: "++id, timestamp",
+        config: "key"
+    });
+
+    const RATING_LEVELS = [
+        { label: "Beginner", value: 2.0 },
+        { label: "Novice", value: 3.0 },
+        { label: "Intermediate", value: 3.5 },
+        { label: "Advanced", value: 4.5 }
+    ];
+
+    // Core state configurations
+    let players = [];
+    let archivedPlayers = []; // Track players who checked out for summary exports
+    let courts = [
+        { id: 1, name: "Court 1", status: "Available", currentMatch: null, isEditing: false },
+        { id: 2, name: "Court 2", status: "Available", currentMatch: null, isEditing: false }
+    ];
+    let waitingQueue = [];
+    let upNextDeck = [];
+    let matchHistory = []; // Track completed matches for summary
+    let isDarkMode = true;
+    // If true, allow preparing/staging matches even when all courts are occupied
+    let allowStagingWhenFull = false;
+    // When true, create matches as high-high vs high-high (top2 vs next2)
+    let gameTimeMode = false;
+    // RT Mode: 0 = Off, 1 = Nearest Skill, 2 = High-Low vs High-Low
+    let rtMode = 0;
+    let historyPanelVisible = false;
+    let courtSelectionOpen = null;
+    let selectedCourtMap = {};
+    // Fair Queue mode: fairness-based shuffle (considers queuedAt, checkInEpoch, idle)
+    let fairQueueMode = false;
+    // Optional persisted seed/order for fair queue
+    let fairQueueSeedOrder = [];
+    // Safety: prevent automatic filling of courts from Up Next unless explicitly enabled
+    let autoFillFromDeck = false;
+    // Matchmaking configuration: tune these to control repeat avoidance
+    const MAX_ALLOWED_OVERLAP = 1; // allow at most this many players in common (0 = no overlap, 1 = allow single-player repeats)
+    const PENALTY_WEIGHT = 10; // weight applied when scoring overlap for fallback choices
+    const STRICT_ATTEMPTS = 30; // number of randomized attempts before falling back
+
+    // Global Stats UI state
+    let statsCurrentTab = 'leaderboard';
+    let statsSortKey = 'winrate';
+    let statsSortDesc = true;
+
+    // Player editing state
+    let editingPlayerId = null;
+
+    // --- PHOTO HELPERS ---
+    function getPhotoUrl(p) {
+        if (!p || !p.photoBlob || !(p.photoBlob instanceof Blob)) return 'logo.jpg';
+        // Reuse object URL if it exists, otherwise create it
+        if (!p._objectUrl) {
+            p._objectUrl = URL.createObjectURL(p.photoBlob);
+        }
+        return p._objectUrl;
+    }
+
+    function updatePlayerPhoto(p, newBlob) {
+        if (p._objectUrl) {
+            URL.revokeObjectURL(p._objectUrl);
+        }
+        p._objectUrl = null;
+        p.photoBlob = newBlob;
+    }
+
+    // --- PERSISTENCE LAYER LOADER ---
+    async function loadFromStorage() {
+        if (localStorage.getItem('pq_players')) {
+            players = JSON.parse(localStorage.getItem('pq_players'));
+            // Restore photoBlobs from IndexedDB
+            for (let p of players) {
+                const gp = await db.players.where('name').equals(p.name).first();
+                if (gp && gp.photoBlob) {
+                    p.photoBlob = gp.photoBlob;
+                }
+            }
+        }
+        if (localStorage.getItem('pq_archivedPlayers')) {
+            archivedPlayers = JSON.parse(localStorage.getItem('pq_archivedPlayers'));
+            // Restore photoBlobs from IndexedDB for archived players
+            for (let p of archivedPlayers) {
+                const gp = await db.players.where('name').equals(p.name).first();
+                if (gp && gp.photoBlob) {
+                    p.photoBlob = gp.photoBlob;
+                }
+            }
+        }
+        if (localStorage.getItem('pq_courts')) {
+            courts = JSON.parse(localStorage.getItem('pq_courts'));
+            courts.forEach(c => c.isEditing = false);
+        }
+        if (localStorage.getItem('pq_waitingQueue')) {
+            waitingQueue = JSON.parse(localStorage.getItem('pq_waitingQueue'));
+        }
+        if (localStorage.getItem('pq_upNextDeck')) {
+            upNextDeck = JSON.parse(localStorage.getItem('pq_upNextDeck'));
+        }
+        if (localStorage.getItem('pq_matchHistory')) {
+            matchHistory = JSON.parse(localStorage.getItem('pq_matchHistory'));
+        }
+        if (localStorage.getItem('pq_isDarkMode')) {
+            isDarkMode = JSON.parse(localStorage.getItem('pq_isDarkMode'));
+        }
+        if (localStorage.getItem('pq_allowStagingWhenFull')) {
+            allowStagingWhenFull = JSON.parse(localStorage.getItem('pq_allowStagingWhenFull'));
+        }
+        if (localStorage.getItem('pq_gameTimeMode')) {
+            gameTimeMode = JSON.parse(localStorage.getItem('pq_gameTimeMode'));
+        }
+        if (localStorage.getItem('pq_rtMode')) {
+            rtMode = JSON.parse(localStorage.getItem('pq_rtMode'));
+        }
+        if (localStorage.getItem('pq_fairQueueMode')) {
+            fairQueueMode = JSON.parse(localStorage.getItem('pq_fairQueueMode'));
+        }
+        if (localStorage.getItem('pq_fairQueueSeedOrder')) {
+            fairQueueSeedOrder = JSON.parse(localStorage.getItem('pq_fairQueueSeedOrder'));
+        }
+        // Auto-fill mode is disabled by design in the staged-first workflow.
+        autoFillFromDeck = false;
+    }
+
+    // --- PERSISTENCE LAYER SAVER ---
+    function saveToStorage() {
+        // Strip photoBlob and _objectUrl before saving to localStorage to prevent corruption/size issues
+        const stripPhotos = (list) => list.map(p => {
+            const { photoBlob, _objectUrl, ...rest } = p;
+            return rest;
+        });
+
+        localStorage.setItem('pq_players', JSON.stringify(stripPhotos(players)));
+        localStorage.setItem('pq_archivedPlayers', JSON.stringify(stripPhotos(archivedPlayers)));
+        localStorage.setItem('pq_courts', JSON.stringify(courts));
+        localStorage.setItem('pq_waitingQueue', JSON.stringify(waitingQueue));
+        localStorage.setItem('pq_upNextDeck', JSON.stringify(upNextDeck));
+        localStorage.setItem('pq_matchHistory', JSON.stringify(matchHistory));
+        localStorage.setItem('pq_isDarkMode', JSON.stringify(isDarkMode));
+        localStorage.setItem('pq_allowStagingWhenFull', JSON.stringify(allowStagingWhenFull));
+        localStorage.setItem('pq_gameTimeMode', JSON.stringify(gameTimeMode));
+        localStorage.setItem('pq_rtMode', JSON.stringify(rtMode));
+        localStorage.setItem('pq_fairQueueMode', JSON.stringify(fairQueueMode));
+        localStorage.setItem('pq_fairQueueSeedOrder', JSON.stringify(fairQueueSeedOrder));
+        localStorage.setItem('pq_autoFillFromDeck', JSON.stringify(autoFillFromDeck));
+    }
+
+    // --- RESET SYSTEM FUNCTION ---
+async function processAwards() {
+    const activeRoster = [...players, ...archivedPlayers];
+    const eligible = activeRoster.filter(p => p.games >= 3);
+
+    if (eligible.length < 3) return;
+
+    // Sort for top 3
+    eligible.sort((a, b) => {
+        const wrA = getWinRate(a);
+        const wrB = getWinRate(b);
+        if (wrB !== wrA) return wrB - wrA;
+        if (b.wins !== a.wins) return b.wins - a.wins;
+        return b.games - a.games;
+    });
+
+    const date = new Date().toLocaleDateString();
+    const medalTypes = ['gold', 'silver', 'bronze'];
+
+    for (let i = 0; i < 3; i++) {
+        const p = eligible[i];
+        const type = medalTypes[i];
+
+        // Update DB
+        const gp = await db.players.where('name').equals(p.name).first();
+        if (gp) {
+            const awards = gp.awards || [];
+            awards.push({ type, date, wins: p.wins, games: p.games });
+            await db.players.update(gp.id, { awards });
+        }
+    }
+}
+
+async function resetAllData() {
+    if (!confirm("Are you sure you want to completely wipe out all players, stats, and court logs? This cannot be undone.")) return;
+
+    await processAwards();
+
+    localStorage.clear();
+        players = [];
+        archivedPlayers = [];
+        courts = [
+            { id: 1, name: "Court 1", status: "Available", currentMatch: null, isEditing: false },
+            { id: 2, name: "Court 2", status: "Available", currentMatch: null, isEditing: false }
+        ];
+        waitingQueue = [];
+        upNextDeck = [];
+        matchHistory = [];
+        renderSystem();
+    }
+
+    function getWinRate(p) {
+        return p.games === 0 ? 0 : Math.round((p.wins / p.games) * 100);
+    }
+
+    function getPlayerActiveDurationMs(p) {
+        if (!p || !p.checkInEpoch) return 0;
+        const idleMs = (p.totalIdleMs || 0) + ((p.status === 'Idle' && p.idleStartedAt) ? Date.now() - p.idleStartedAt : 0);
+        return Math.max(Date.now() - p.checkInEpoch - idleMs, 0);
+    }
+
+    function getPlayerFairnessScore(p) {
+        const waitMinutes = p.status === 'Queued' ? Math.max((Date.now() - (p.queuedAt || Date.now())) / 60000, 0) : 0;
+
+        // NEW Fair Rotation Logic:
+        // 1. Newcomers (0 games) get absolute priority.
+        // 2. Everyone else follows FIFO (Wait time based on queuedAt).
+        // 3. We use a massive priority offset for 0-game players.
+
+        let score = (p.queuedAt || Date.now());
+
+        if (p.games === 0) {
+            score -= 1000000000000; // Offset by ~31 years to ensure they are at the front
+        }
+
+        return {
+            score: score,
+            waitMinutes: waitMinutes,
+            games: p.games
+        };
+    }
+
+    function formatLiveDuration(ms) {
+        const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+        if (hours > 0) {
+            return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+        return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+
+    function getPlayerStatusDetail(p) {
+        if (!p) return '';
+        if (p.status === 'Queued') {
+            const waitMs = Date.now() - (p.queuedAt || Date.now());
+            const label = p.justPlayed ? 'Just played' : 'Waiting';
+            return `${label} <span class="text-amber-500 font-bold">${formatLiveDuration(waitMs)}</span>`;
+        }
+        if (p.status === 'Idle') {
+            const idleMs = p.idleStartedAt ? Date.now() - p.idleStartedAt : 0;
+            return `Idle ${formatLiveDuration(idleMs)}`;
+        }
+        return '';
+    }
+
+    function toggleTheme() {
+        isDarkMode = !isDarkMode;
+        applyThemeClasses();
+        saveToStorage();
+        renderSystem();
+    }
+
+    function applyThemeClasses() {
+        const body = document.body;
+        const themeIcon = document.getElementById('theme-icon');
+        const themeText = document.getElementById('theme-text');
+
+        if (isDarkMode) {
+            body.className = "antialiased pb-20 bg-slate-900 text-slate-100 dark-mode";
+            themeIcon.className = "fas fa-sun";
+            themeText.innerText = "Light Mode";
+        } else {
+            body.className = "antialiased pb-20 bg-slate-50 text-slate-900 light-mode";
+            themeIcon.className = "fas fa-moon";
+            themeText.innerText = "Dark Mode";
+        }
+    }
+
+    function renderSystem() {
+        renderCourts();
+        renderRoster();
+        renderCheckedOutPlayers();
+        renderUpNext();
+        renderCourtSelection();
+        renderMatchHistoryPreview();
+        populateManualSelector();
+        updateUpNextToggleUI();
+        updateGameTimeUI();
+        updateRTUI();
+        updateFairQueueUI();
+        updateAutoFillUI();
+    }
+
+    function updateGameTimeUI() {
+        const icon = document.getElementById('game-time-icon');
+        const text = document.getElementById('game-time-text');
+        const btn = document.getElementById('game-time-toggle');
+        if (!icon || !text || !btn) return;
+
+        if (gameTimeMode) {
+            btn.className = 'flex-1 text-xs bg-emerald-500 hover:bg-emerald-600 py-3 rounded-xl font-bold transition text-white flex items-center justify-center gap-2';
+            icon.className = 'fas fa-stopwatch text-white';
+            btn.title = 'Game Time On';
+        } else {
+            btn.className = 'flex-1 text-xs bg-slate-700 hover:bg-slate-600 py-3 rounded-xl font-bold transition text-slate-200 flex items-center justify-center gap-2';
+            icon.className = 'fas fa-stopwatch text-slate-200';
+            btn.title = 'Game Time Off';
+        }
+    }
+
+    function toggleGameTimeMode() {
+        gameTimeMode = !gameTimeMode;
+        if (gameTimeMode) rtMode = false;
+        saveToStorage();
+        updateGameTimeUI();
+        updateRTUI();
+    }
+
+    function toggleRTMode() {
+        rtMode = !rtMode;
+        if (rtMode) gameTimeMode = false;
+        saveToStorage();
+        updateRTUI();
+        updateGameTimeUI();
+        renderRoster(); // Refresh to show/hide ratings
+    }
+
+    function updateRTUI() {
+        const icon = document.getElementById('rt-icon');
+        const text = document.getElementById('rt-text');
+        const btn = document.getElementById('rt-toggle');
+        if (!icon || !text || !btn) return;
+
+        if (rtMode) {
+            btn.className = 'flex-1 text-xs bg-emerald-500 hover:bg-emerald-600 py-3 rounded-xl font-bold transition text-white flex items-center justify-center gap-2';
+            icon.className = 'fas fa-star text-white';
+            btn.title = 'RT Mode On (Fair Pairing)';
+        } else {
+            btn.className = 'flex-1 text-xs bg-slate-700 hover:bg-slate-600 py-3 rounded-xl font-bold transition text-slate-200 flex items-center justify-center gap-2';
+            icon.className = 'fas fa-star text-slate-200';
+            btn.title = 'RT Mode Off';
+        }
+    }
+
+    function toggleFairQueueMode() {
+        fairQueueMode = !fairQueueMode;
+        // seed preserved order when enabling
+        if (fairQueueMode && Array.isArray(waitingQueue) && waitingQueue.length > 0) {
+            fairQueueSeedOrder = waitingQueue.slice();
+        }
+        if (!fairQueueMode) fairQueueSeedOrder = [];
+        saveToStorage();
+        updateFairQueueUI();
+        renderSystem();
+    }
+
+    function toggleAutoFillMode() {
+        autoFillFromDeck = !autoFillFromDeck;
+        saveToStorage();
+        updateAutoFillUI();
+        renderSystem();
+    }
+
+    function updateAutoFillUI() {
+        const btn = document.getElementById('autofill-toggle');
+        if (!btn) return;
+        if (autoFillFromDeck) {
+            btn.className = 'text-xs bg-amber-600 hover:bg-amber-700 px-3 py-1.5 rounded-lg font-bold transition text-white flex items-center gap-2';
+            btn.title = 'Auto-fill enabled: matches auto-placed on courts when available';
+            btn.innerHTML = '<i class="fas fa-bolt"></i> <span>Auto-Fill ON</span>';
+        } else {
+            btn.className = 'text-xs bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded-lg font-bold transition text-slate-200 flex items-center gap-2';
+            btn.title = 'Auto-fill disabled: explicit "Send to court" + "Confirm" required';
+            btn.innerHTML = '<i class="fas fa-hand-paper"></i> <span>Manual</span>';
+        }
+    }
+
+    function updateFairQueueUI() {
+        const icon = document.getElementById('fairq-icon');
+        const text = document.getElementById('fairq-text');
+        const btn = document.getElementById('fairq-toggle');
+        if (!icon || !text || !btn) return;
+
+        if (fairQueueMode) {
+            btn.className = 'flex-1 text-xs bg-emerald-500 hover:bg-emerald-600 px-2 py-3 rounded-xl font-bold transition text-white flex items-center justify-center gap-2';
+            icon.className = 'fas fa-balance-scale text-white';
+            text.innerText = 'FairQ';
+            btn.title = 'FairQ Mode ON (Skill Based)';
+        } else {
+            btn.className = 'flex-1 text-xs bg-blue-600 hover:bg-blue-500 px-2 py-3 rounded-xl font-bold transition text-white flex items-center justify-center gap-2';
+            icon.className = 'fas fa-list-ol text-white';
+            text.innerText = 'FIFO';
+            btn.title = 'FIFO Mode ON (Fair Rotation)';
+        }
+    }
+
+
+    function renderCourtSelection() {
+        const row = document.getElementById('court-select-row');
+        if (!row) return;
+        row.classList.add('hidden');
+    }
+
+    function getSelectedNextCourtId() {
+        const select = document.getElementById('next-match-court');
+        if (!select || !select.value) return null;
+        return parseInt(select.value, 10);
+    }
+
+    function getAvailableCourts() {
+        return courts.filter(c => c.status === 'Available');
+    }
+
+    function canStageNewMatch() {
+        if (allowStagingWhenFull) return true;
+        return upNextDeck.length < courts.length;
+    }
+
+    function getRandomSample(array, count) {
+        const copy = [...array];
+        for (let i = copy.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [copy[i], copy[j]] = [copy[j], copy[i]];
+        }
+        return copy.slice(0, count);
+    }
+
+    // Compute overlap penalty for a candidate group of player IDs
+    // Returns an object: { maxCommon, pairCountSum, score }
+    function computeOverlapPenalty(candidateIds) {
+        if (!Array.isArray(candidateIds) || candidateIds.length === 0) return { maxCommon: 0, pairCountSum: 0, score: 0 };
+        const candSet = new Set(candidateIds.map(id => parseInt(id, 10)));
+
+        let maxCommon = 0;
+        let pairCountSum = 0;
+
+        // Consecutive lineups to check against:
+        // 1. Matches already in upNextDeck (staged matches)
+        // 2. The most recent match in matchHistory (last completed)
+        const stagedLineups = upNextDeck.map(m => [m.p1, m.p2, m.p3, m.p4].map(id => parseInt(id, 10)));
+        const lastCompletedLineup = matchHistory.length > 0 ? matchHistory[matchHistory.length - 1].playerIds.map(id => parseInt(id, 10)) : [];
+
+        const consecutiveLineups = [...stagedLineups];
+        if (lastCompletedLineup.length > 0) consecutiveLineups.push(lastCompletedLineup);
+
+        // All historical matches for general variety
+        const historicalLineups = matchHistory.map(h => (h.playerIds || []).map(id => parseInt(id, 10)));
+
+        const checkOverlap = (lineup, weight) => {
+            const histSet = new Set(lineup);
+            let common = 0;
+            candSet.forEach(id => { if (histSet.has(id)) common++; });
+            if (common > maxCommon) maxCommon = common;
+
+            // For each pair in the candidate, check if both appeared together in this lineup
+            const idArr = Array.from(candSet);
+            for (let i = 0; i < idArr.length; i++) {
+                for (let j = i + 1; j < idArr.length; j++) {
+                    if (histSet.has(idArr[i]) && histSet.has(idArr[j])) {
+                        pairCountSum += weight;
+                    }
+                }
+            }
+        };
+
+        // Heavy penalty for consecutive overlaps
+        consecutiveLineups.forEach(l => checkOverlap(l, 50));
+        // Light penalty for historical repeats
+        historicalLineups.forEach(l => checkOverlap(l, 1));
+
+        // Score: prioritize low maxCommon, then low pairCountSum
+        // Exponentially penalize maxCommon to strictly avoid 2+ overlaps
+        const score = (Math.pow(maxCommon, 4) * 10000) + pairCountSum;
+        return { maxCommon, pairCountSum, score };
+    }
+
+    function shuffleStagedMatch(matchId) {
+        const idx = upNextDeck.findIndex(m => m.id == matchId);
+        if (idx === -1) return;
+        const match = upNextDeck[idx];
+        const currentPlayers = [match.p1, match.p2, match.p3, match.p4]
+            .map(id => players.find(p => p.id == id))
+            .filter(Boolean);
+        const queuePlayers = waitingQueue.map(id => players.find(p => p.id == id)).filter(Boolean);
+        const pool = [...currentPlayers, ...queuePlayers.filter(p => !currentPlayers.some(cp => cp.id === p.id))];
+        if (pool.length < 4) return alert("Need at least 4 players to shuffle the matchup.");
+
+        let newPlayers = chooseClosestWinrateGroup(pool, 4, true);
+        if (newPlayers.length < 4) newPlayers = chooseClosestWinrateGroup(pool, 4, false);
+        if (newPlayers.length < 4) newPlayers = getRandomSample(pool, 4);
+        if (newPlayers.length < 4) return alert("Unable to create a shuffled lineup.");
+
+        const newIds = newPlayers.map(p => p.id);
+        currentPlayers.forEach(p => {
+            if (!newIds.includes(p.id)) {
+                p.status = 'Queued';
+                p.queuedAt = Date.now();
+                if (!waitingQueue.includes(p.id)) waitingQueue.push(p.id);
+            }
+        });
+        newPlayers.forEach(p => {
+            p.status = 'Staged';
+            waitingQueue = waitingQueue.filter(id => id !== p.id);
+        });
+        upNextDeck[idx] = buildMatchFromSelected(newPlayers);
+        saveToStorage();
+        renderSystem();
+    }
+
+    function replaceStagedMatch(matchId) {
+        const idx = upNextDeck.findIndex(m => m.id == matchId);
+        if (idx === -1) return;
+        const match = upNextDeck[idx];
+        const currentPlayers = [match.p1, match.p2, match.p3, match.p4]
+            .map(id => players.find(p => p.id == id))
+            .filter(Boolean);
+        const queuePlayers = waitingQueue.map(id => players.find(p => p.id == id)).filter(Boolean);
+        if (queuePlayers.length === 0) return alert("No queued players available to replace a lineup member.");
+
+        const currentAvg = currentPlayers.reduce((sum, p) => sum + getWinRate(p), 0) / currentPlayers.length;
+        const toReplace = currentPlayers.reduce((worst, p) => {
+            return Math.abs(getWinRate(p) - currentAvg) > Math.abs(getWinRate(worst) - currentAvg) ? p : worst;
+        }, currentPlayers[0]);
+        const replacement = queuePlayers.reduce((best, p) => {
+            return Math.abs(getWinRate(p) - currentAvg) < Math.abs(getWinRate(best) - currentAvg) ? p : best;
+        }, queuePlayers[0]);
+        if (!replacement) return alert("No replacement found.");
+
+        toReplace.status = 'Queued';
+        toReplace.queuedAt = Date.now();
+        if (!waitingQueue.includes(toReplace.id)) waitingQueue.push(toReplace.id);
+        replacement.status = 'Staged';
+        waitingQueue = waitingQueue.filter(id => id !== replacement.id);
+        const newPlayers = currentPlayers.filter(p => p.id !== toReplace.id).concat(replacement);
+        upNextDeck[idx] = buildMatchFromSelected(newPlayers);
+        saveToStorage();
+        renderSystem();
+    }
+
+    function prepareSendToCourt(matchId) {
+        const availableCourts = getAvailableCourts();
+        if (availableCourts.length === 0) return alert("No courts available. Add or free a court first.");
+        if (availableCourts.length === 1) {
+            placeMatchOnCourt(matchId, availableCourts[0].id);
+            return;
+        }
+        courtSelectionOpen = matchId;
+        selectedCourtMap[matchId] = selectedCourtMap[matchId] || (availableCourts[0] && availableCourts[0].id);
+        renderSystem();
+    }
+
+    function confirmSendToCourt(matchId) {
+        let courtId = parseInt(selectedCourtMap[matchId], 10);
+        const availableCourts = getAvailableCourts();
+        if (!courtId && availableCourts.length === 1) {
+            courtId = availableCourts[0].id;
+        }
+        if (!courtId) return alert("Please select a court.");
+        placeMatchOnCourt(matchId, courtId);
+        courtSelectionOpen = null;
+        delete selectedCourtMap[matchId];
+        renderSystem();
+    }
+
+    function cancelCourtSelection() {
+        courtSelectionOpen = null;
+        renderSystem();
+    }
+
+    function placeMatchOnCourt(matchId, courtId) {
+        const matchIndex = upNextDeck.findIndex(m => m.id == matchId);
+        if (matchIndex === -1) return alert("Staged match not found.");
+        const court = courts.find(c => c.id == courtId && c.status === 'Available');
+        if (!court) return alert("Selected court is not available.");
+
+        const match = upNextDeck.splice(matchIndex, 1)[0];
+        [match.p1, match.p2, match.p3, match.p4].forEach(pid => {
+            const p = players.find(x => x.id == pid);
+            if (p) {
+                p.status = 'Playing';
+                waitingQueue = waitingQueue.filter(q => q !== pid);
+            }
+        });
+
+        court.status = 'Occupied';
+        court.currentMatch = match;
+        court.isEditing = false;
+        courtSelectionOpen = null;
+        delete selectedCourtMap[matchId];
+        match.startTime = Date.now();
+        match.waitLog = match.waitLog || [];
+        saveToStorage();
+        renderSystem();
+    }
+
+    function renderMatchHistoryPreview() {
+        const container = document.getElementById('recent-history-preview');
+        if (!container) return;
+        if (matchHistory.length === 0) {
+            container.innerHTML = '<div class="text-xs text-slate-500 italic">No recent matches yet.</div>';
+            return;
+        }
+        const recent = matchHistory.slice(-3).reverse();
+        container.innerHTML = recent.map(h => `
+            <div class="rounded-2xl border border-slate-700/80 bg-slate-950 p-3">
+                <div class="flex items-center justify-between text-[11px] text-slate-400">
+                    <span>${h.timestamp}</span>
+                    <span>${h.court}</span>
+                </div>
+                <div class="mt-2 text-sm font-bold text-slate-100">${h.team1} <span class="text-slate-500">vs</span> ${h.team2}</div>
+                <div class="mt-1 text-[11px] text-emerald-400">${h.winner} • ${h.duration}m</div>
+            </div>`).join('');
+    }
+
+    function renderFullMatchHistoryPanel() {
+        const panel = document.getElementById('match-history-panel');
+        if (!panel) return;
+        if (matchHistory.length === 0) {
+            panel.innerHTML = '<div class="text-xs text-slate-500 italic">No match history available.</div>';
+            return;
+        }
+        panel.innerHTML = `
+            <div class="overflow-x-auto">
+                <table class="min-w-full text-left text-[12px] border-separate border-spacing-y-2">
+                    <thead>
+                        <tr class="text-slate-400 uppercase tracking-widest text-[10px]">
+                            <th class="px-3 py-2">Time</th>
+                            <th class="px-3 py-2">Court</th>
+                            <th class="px-3 py-2">Matchup</th>
+                            <th class="px-3 py-2">Winner</th>
+                            <th class="px-3 py-2">Duration</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${matchHistory.slice().reverse().map(h => `
+                            <tr class="border-t border-slate-700/60">
+                                <td class="px-3 py-2 text-slate-200">${h.timestamp}</td>
+                                <td class="px-3 py-2 text-slate-200">${h.court}</td>
+                                <td class="px-3 py-2 text-slate-200">${h.team1} vs ${h.team2}</td>
+                                <td class="px-3 py-2 text-emerald-400">${h.winner}</td>
+                                <td class="px-3 py-2 text-slate-200">${h.duration}m</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+    }
+
+    function toggleMatchHistoryPanel() {
+        const panel = document.getElementById('match-history-panel');
+        const button = document.getElementById('toggle-history-btn');
+        if (!panel || !button) return;
+        historyPanelVisible = !historyPanelVisible;
+        panel.classList.toggle('hidden', !historyPanelVisible);
+        button.innerText = historyPanelVisible ? 'Hide Match History' : 'View Match History';
+        if (historyPanelVisible) {
+            renderFullMatchHistoryPanel();
+        }
+    }
+
+    function updateUpNextToggleUI() {
+        const icon = document.getElementById('upnext-toggle-icon');
+        const text = document.getElementById('upnext-toggle-text');
+        if (!icon || !text) return;
+        if (allowStagingWhenFull) {
+            icon.className = 'fas fa-unlock text-emerald-400';
+            text.innerText = 'Unlocked';
+        } else {
+            icon.className = 'fas fa-lock text-rose-400';
+            text.innerText = 'Locked';
+        }
+    }
+
+    function toggleUpNextAllow() {
+        allowStagingWhenFull = !allowStagingWhenFull;
+        saveToStorage();
+        updateUpNextToggleUI();
+    }
+
+    function renderRoster() {
+        const container = document.getElementById('roster-container');
+        if (!container) return;
+        document.getElementById('roster-count').innerText = players.length;
+
+        if (players.length === 0) {
+            container.innerHTML = `<div class="text-xs text-slate-500 italic text-center py-4">No players registered. Add players above.</div>`;
+            return;
+        }
+
+        const themeCardBg = isDarkMode ? "bg-slate-800/50 border-slate-700/50" : "bg-white border-slate-200 shadow-sm";
+        const themeTextMain = isDarkMode ? "text-slate-200" : "text-slate-800";
+        const themeTextBadges = isDarkMode ? "bg-slate-700 text-slate-400" : "bg-slate-200 text-slate-600";
+
+        // Create a stable sort for display
+        const displayPlayers = [...players].sort((a,b) => b.id - a.id).sort((a,b) => getWinRate(b) - getWinRate(a));
+
+        container.innerHTML = displayPlayers.map(p => {
+            let actionButton = '';
+            if (p.status === 'Available') {
+                actionButton = `<button onclick="sendToQueue(${p.id})" class="bg-emerald-500/10 text-emerald-500 p-2 rounded-lg text-xs hover:bg-emerald-500 hover:text-slate-950 transition"><i class="fas fa-plus"></i></button>`;
+            }
+
+            // Add Idle / Check-In button conditional layout
+            let idleToggleBtn = '';
+            if (p.status === 'Queued' || p.status === 'Available') {
+                idleToggleBtn = `<button onclick="setPlayerIdle(${p.id})" title="Go Idle" class="text-slate-400 hover:text-amber-500 transition p-1"><i class="fas fa-coffee"></i></button>`;
+            } else if (p.status === 'Idle') {
+                idleToggleBtn = `<button onclick="checkInFromIdle(${p.id})" title="Check In" class="text-amber-500 hover:text-emerald-500 font-bold transition p-1 text-xs flex items-center gap-1"><i class="fas fa-sign-in-alt"></i> Check In</button>`;
+            }
+
+            // Skill level dots mapping
+            const dotMap = { 2.0: 1, 3.0: 2, 3.5: 3, 4.5: 4 };
+            const dotsCount = dotMap[p.ratingValue] || 0;
+            const dotsHtml = rtMode > 0 && dotsCount > 0 ?
+                `<div class="flex gap-0.5 mt-0.5">${Array(dotsCount).fill('<div class="w-1.5 h-1.5 rounded-full bg-amber-500"></div>').join('')}</div>` : '';
+
+            // Handle Photo Rendering - Use Helper
+            const photoUrl = getPhotoUrl(p);
+
+            return `
+                <div class="${themeCardBg} border p-3 rounded-2xl flex justify-between items-center cursor-pointer hover:border-emerald-500/50 transition-all duration-300" onclick="openPlayerProfile(${p.id})">
+                    <div class="flex-1">
+                        <div class="font-bold text-sm ${themeTextMain} flex items-center gap-2">
+                            <img src="${photoUrl}" class="w-8 h-8 rounded-full object-cover">
+                            <div class="flex flex-col">
+                                <span>${p.name}</span>
+                                ${dotsHtml}
+                            </div>
+                            <span class="text-[10px] ${p.status === 'Idle' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : themeTextBadges} px-1.5 py-0.5 rounded font-normal ml-1">${p.status}</span>
+                            ${getPlayerStatusDetail(p) ? `<span class="text-[9px] text-slate-400 font-normal ml-2">${getPlayerStatusDetail(p)}</span>` : ''}
+                        </div>
+                        <div class="text-[10px] text-slate-400 uppercase font-bold mt-0.5 ml-10">
+                            ${p.wins}W / ${p.games - p.wins}L • <span class="text-emerald-500">${getWinRate(p)}% Winrate</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2" onclick="event.stopPropagation()">
+                        ${actionButton}
+                        ${idleToggleBtn}
+                        <button onclick="removePlayer(${p.id})" class="text-slate-400 hover:text-rose-500 transition px-2"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+function renderCheckedOutPlayers() {
+    const container = document.getElementById('checked-out-container');
+    const countEl = document.getElementById('checked-out-count');
+    if (!container || !countEl) return;
+
+    // We'll use archivedPlayers to store checked out players who can still return
+    // Only show players who haven't been "fully" archived if we had that distinction,
+    // but here we'll treat archivedPlayers as the pool.
+    countEl.innerText = archivedPlayers.length;
+
+    if (archivedPlayers.length === 0) {
+        container.innerHTML = `<div class="text-xs text-slate-500 italic text-center py-4">No checked out players.</div>`;
+        return;
+    }
+
+    const themeCardBg = isDarkMode ? "bg-slate-800/50 border-slate-700/50" : "bg-white border-slate-200 shadow-sm";
+    const themeTextMain = isDarkMode ? "text-slate-200" : "text-slate-800";
+
+    container.innerHTML = archivedPlayers.slice().reverse().map(p => `
+        <div class="${themeCardBg} border p-3 rounded-2xl flex justify-between items-center opacity-75">
+            <div>
+                <div class="font-bold text-sm ${themeTextMain}">
+                    ${p.name}
+                    <span class="text-[10px] bg-rose-500/20 text-rose-400 border border-rose-500/30 px-1.5 py-0.5 rounded font-normal ml-1">Checked Out</span>
+                </div>
+                <div class="text-[9px] text-slate-500 font-mono">Out: ${p.checkOutTime}</div>
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="returnToRoster(${p.id})" title="Return to Roster" class="bg-emerald-500/10 text-emerald-500 p-2 rounded-lg text-xs hover:bg-emerald-500 hover:text-slate-950 transition">
+                    <i class="fas fa-undo"></i>
+                </button>
+                <button onclick="permanentlyRemovePlayer(${p.id})" title="Remove Permanently" class="text-slate-400 hover:text-rose-500 transition p-1">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function returnToRoster(id) {
+    const pIndex = archivedPlayers.findIndex(p => p.id == id);
+    if (pIndex === -1) return;
+
+    const p = archivedPlayers.splice(pIndex, 1)[0];
+
+    // Add time spent in Checked Out status to idle time
+    if (p.checkOutEpoch) {
+        const idleSpent = Date.now() - p.checkOutEpoch;
+        p.totalIdleMs = (p.totalIdleMs || 0) + idleSpent;
+    }
+
+    p.status = 'Available';
+    p.checkOutTime = "Active";
+    delete p.checkOutEpoch;
+
+    players.push(p);
+    saveToStorage();
+    renderSystem();
+}
+
+function permanentlyRemovePlayer(id) {
+    if (!confirm("Are you sure you want to permanently remove this player from the system? Their history will be lost.")) return;
+    archivedPlayers = archivedPlayers.filter(p => p.id != id);
+    saveToStorage();
+    renderSystem();
+}
+
+    function renderCourts() {
+        const container = document.getElementById('courts-grid');
+
+        if(courts.length === 0) {
+            container.innerHTML = `<div class="col-span-full text-center text-xs p-8 border-2 border-dashed border-slate-700 rounded-3xl text-slate-500">No courts configured. Click "+ Add Court" to expand.</div>`;
+            return;
+        }
+
+        const cardBg = isDarkMode ? "bg-slate-950 border-slate-800" : "bg-white border-slate-200 shadow-md";
+        const innerSectionBg = isDarkMode ? "bg-slate-900/60 border-slate-800" : "bg-slate-50 border-slate-100";
+        const textMain = isDarkMode ? "text-slate-200" : "text-slate-800";
+
+        container.innerHTML = courts.map(c => {
+            if (c.status === 'Available') {
+                return `
+                    <div class="${cardBg} border-2 border-dashed p-6 rounded-3xl flex flex-col items-center justify-center min-h-[220px] relative">
+                        <button onclick="removeCourt(${c.id})" class="absolute top-3 right-3 text-xs bg-slate-800 dark:bg-slate-900 hover:bg-rose-900 hover:text-white border border-slate-700 rounded-lg p-1.5 px-2 transition text-slate-400">
+                            <i class="fas fa-minus-circle mr-1"></i> Remove
+                        </button>
+                        <div class="text-slate-400 font-bold mb-2 uppercase tracking-tight">${c.name}</div>
+                        <button onclick="fillCourtFromStaged(${c.id})" class="text-xs bg-slate-800 dark:bg-slate-900 hover:bg-emerald-500 hover:text-slate-950 px-4 py-2 rounded-xl border border-slate-700 dark:border-slate-800 font-bold transition text-slate-200">Click Auto Select or Manual Select to start match</button>
+                    </div>
+                `;
+            }
+
+            const m = c.currentMatch;
+            const p1 = players.find(p => p.id == m.p1) || { name: 'Unknown' };
+            const p2 = players.find(p => p.id == m.p2) || { name: 'Unknown' };
+            const p3 = players.find(p => p.id == m.p3) || { name: 'Unknown' };
+            const p4 = players.find(p => p.id == m.p4) || { name: 'Unknown' };
+
+            const durationMs = Date.now() - m.startTime;
+            const durationMin = Math.floor(durationMs / 60000);
+            const durationSec = Math.floor((durationMs % 60000) / 1000);
+
+            if (c.isEditing) {
+                const currentMatchIds = [m.p1, m.p2, m.p3, m.p4];
+                return `
+                    <div class="${cardBg} border-2 border-blue-500/50 rounded-3xl overflow-hidden shadow-2xl p-4 space-y-4">
+                        <div class="flex justify-between items-center border-b border-slate-700 dark:border-slate-800 pb-2">
+                            <span class="text-xs font-bold text-blue-500 flex items-center gap-1.5">
+                                <i class="fas fa-user-edit"></i> EDITING ${c.name.toUpperCase()}
+                            </span>
+                            <button onclick="toggleCourtEdit(${c.id}, false)" class="text-slate-400 hover:text-slate-200 text-xs"><i class="fas fa-times"></i> Close</button>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div class="${innerSectionBg} p-2.5 rounded-xl border space-y-2">
+                                <div class="text-[9px] font-black text-emerald-500 tracking-wider uppercase">Team 1 Options</div>
+                                <div>
+                                    <div class="flex gap-1">
+                                        <select id="edit-${c.id}-p1" class="w-full bg-slate-800 border border-slate-600 p-1.5 rounded-lg text-xs outline-none text-white" onchange="handleInlineSelectChange(${c.id}, 'edit-${c.id}-p1')">${genOptions(m.p1, currentMatchIds)}</select>
+                                        <button onclick="triggerInlineAutoReplace(${c.id}, 'edit-${c.id}-p1')" type="button" class="bg-blue-600/20 text-blue-400 border border-blue-500/30 hover:bg-blue-600 hover:text-white px-2 rounded-lg text-[10px] font-bold transition"><i class="fas fa-magic"></i></button>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex gap-1">
+                                        <select id="edit-${c.id}-p2" class="w-full bg-slate-800 border border-slate-600 p-1.5 rounded-lg text-xs outline-none text-white" onchange="handleInlineSelectChange(${c.id}, 'edit-${c.id}-p2')">${genOptions(m.p2, currentMatchIds)}</select>
+                                        <button onclick="triggerInlineAutoReplace(${c.id}, 'edit-${c.id}-p2')" type="button" class="bg-blue-600/20 text-blue-400 border border-blue-500/30 hover:bg-blue-600 hover:text-white px-2 rounded-lg text-[10px] font-bold transition"><i class="fas fa-magic"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="${innerSectionBg} p-2.5 rounded-xl border space-y-2">
+                                <div class="text-[9px] font-black text-blue-500 tracking-wider uppercase">Team 2 Options</div>
+                                <div>
+                                    <div class="flex gap-1">
+                                        <select id="edit-${c.id}-p3" class="w-full bg-slate-800 border border-slate-600 p-1.5 rounded-lg text-xs outline-none text-white" onchange="handleInlineSelectChange(${c.id}, 'edit-${c.id}-p3')">${genOptions(m.p3, currentMatchIds)}</select>
+                                        <button onclick="triggerInlineAutoReplace(${c.id}, 'edit-${c.id}-p3')" type="button" class="bg-blue-600/20 text-blue-400 border border-blue-500/30 hover:bg-blue-600 hover:text-white px-2 rounded-lg text-[10px] font-bold transition"><i class="fas fa-magic"></i></button>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex gap-1">
+                                        <select id="edit-${c.id}-p4" class="w-full bg-slate-800 border border-slate-600 p-1.5 rounded-lg text-xs outline-none text-white" onchange="handleInlineSelectChange(${c.id}, 'edit-${c.id}-p4')">${genOptions(m.p4, currentMatchIds)}</select>
+                                        <button onclick="triggerInlineAutoReplace(${c.id}, 'edit-${c.id}-p4')" type="button" class="bg-blue-600/20 text-blue-400 border border-blue-500/30 hover:bg-blue-600 hover:text-white px-2 rounded-lg text-[10px] font-bold transition"><i class="fas fa-magic"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-2 pt-1">
+                            <button onclick="toggleCourtEdit(${c.id}, false)" class="flex-1 py-1.5 bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-bold rounded-lg transition">Cancel</button>
+                            <button onclick="saveInlineMatchEdits(${c.id})" class="flex-1 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-slate-950 text-xs font-bold rounded-lg transition">Apply changes</button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="${cardBg} border border-blue-500/30 rounded-3xl overflow-hidden shadow-xl flex flex-col justify-between min-h-[220px]">
+                    <div class="bg-blue-500/10 px-4 py-2 border-b border-blue-500/20 flex justify-between items-center">
+                        <span class="text-xs font-bold text-blue-500">${c.name.toUpperCase()} • IN PLAY (<span class="font-mono">${durationMin}:${durationSec.toString().padStart(2,'0')}</span>)</span>
+                        <div class="flex items-center gap-2">
+                            <button onclick="removeMatchFromCourt(${c.id})" class="text-rose-400 hover:text-rose-200 text-xs bg-slate-800/90 px-2 py-1 rounded-lg transition">
+                                <i class="fas fa-times"></i>
+                            </button>
+                            <button onclick="toggleCourtEdit(${c.id}, true)" class="text-[10px] bg-slate-800 dark:bg-slate-900 hover:bg-slate-700 px-2 py-1 rounded border border-slate-600 dark:border-slate-700 transition text-slate-200">
+                                <i class="fas fa-user-edit mr-1"></i> Change / Auto Replace
+                            </button>
+                        </div>
+                    </div>
+                    <div class="p-4 grid grid-cols-2 gap-4 flex-1">
+                        <div class="space-y-1">
+                            <div class="text-[9px] font-black text-emerald-500 tracking-wider">TEAM 1</div>
+                            <div class="text-xs font-bold truncate ${textMain}">${p1.name} <span class="text-[10px] text-slate-400">(${getWinRate(p1)}%)</span></div>
+                            <div class="text-xs font-bold truncate ${textMain}">${p2.name} <span class="text-[10px] text-slate-400">(${getWinRate(p2)}%)</span></div>
+                        </div>
+                        <div class="space-y-1 border-l border-slate-700 dark:border-slate-800 pl-3">
+                            <div class="text-[9px] font-black text-blue-500 tracking-wider">TEAM 2</div>
+                            <div class="text-xs font-bold truncate ${textMain}">${p3.name} <span class="text-[10px] text-slate-400">(${getWinRate(p3)}%)</span></div>
+                            <div class="text-xs font-bold truncate ${textMain}">${p4.name} <span class="text-[10px] text-slate-400">(${getWinRate(p4)}%)</span></div>
+                        </div>
+                    </div>
+                    <div class="p-4 pt-0 grid grid-cols-2 gap-2">
+                        <button onclick="resolveMatch(${c.id}, 1)" class="win-gradient text-slate-950 font-black text-[10px] py-2 rounded-xl uppercase tracking-wider">T1 Wins</button>
+                        <button onclick="resolveMatch(${c.id}, 2)" class="win-gradient text-slate-950 font-black text-[10px] py-2 rounded-xl uppercase tracking-wider">T2 Wins</button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function renderUpNext() {
+        const container = document.getElementById('up-next-container');
+        if (!container) return;
+
+        if (upNextDeck.length === 0) {
+            container.innerHTML = `<div class="col-span-full text-xs text-slate-500 italic py-4 text-center">Staging zone empty. Run auto-match or manually pair combinations below.</div>`;
+            return;
+        }
+
+        const themeBg = isDarkMode ? "bg-slate-950/40 border-slate-800" : "bg-white border-slate-200 shadow-sm";
+        const availableCourts = getAvailableCourts();
+
+        container.innerHTML = upNextDeck.map((m, idx) => {
+            const p1 = players.find(p => p.id == m.p1) || { name: 'Unknown' };
+            const p2 = players.find(p => p.id == m.p2) || { name: 'Unknown' };
+            const p3 = players.find(p => p.id == m.p3) || { name: 'Unknown' };
+            const p4 = players.find(p => p.id == m.p4) || { name: 'Unknown' };
+            const isDropdownOpen = courtSelectionOpen === m.id;
+            const selectedCourt = selectedCourtMap[m.id] || (availableCourts[0] && availableCourts[0].id);
+
+            return `
+                <div class="${themeBg} border border-slate-700/70 rounded-3xl p-5 shadow-xl space-y-4 min-h-[190px]">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="min-w-0 flex-1">
+                            <div class="text-[10px] font-bold uppercase tracking-widest text-amber-500 mb-3">Staged Match #${idx + 1}</div>
+                            <div class="text-base md:text-lg font-bold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}">${p1.name} + ${p2.name}</div>
+                            <div class="text-sm text-slate-400 my-2 text-center">vs</div>
+                            <div class="text-base md:text-lg font-bold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}">${p3.name} + ${p4.name}</div>
+                        </div>
+                        <div class="flex items-center gap-2 flex-shrink-0">
+                            <button onclick="editStagedMatch(${m.id})" class="text-slate-200 hover:text-white text-xs bg-slate-800/80 px-3 py-2 rounded-xl transition flex items-center gap-2 whitespace-nowrap">
+                                <i class="fas fa-user-edit"></i> Edit
+                            </button>
+                            <button onclick="dismissStaged(${m.id})" class="text-rose-400 hover:text-rose-300 text-xl rounded-full p-2 transition" title="Remove staged match">
+                                <i class="fas fa-times-circle"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <button onclick="prepareSendToCourt(${m.id})" class="w-full text-[10px] bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl px-2 py-1 transition font-bold uppercase tracking-wide">
+                            Send to court
+                        </button>
+                        <button onclick="shuffleStagedMatch(${m.id})" class="w-full text-[10px] bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl px-2 py-1 transition font-bold uppercase tracking-wide">
+                            Shuffle
+                        </button>
+                    </div>
+                    <div class="text-xs text-slate-400">Use "Send to court" to move this staged match into an available court. If multiple courts are open, choose the court before confirming.</div>
+                    ${isDropdownOpen ? `
+                        <div class="flex flex-col gap-2">
+                            ${availableCourts.length > 1 ? `
+                                <select id="court-select-${m.id}" onchange="selectedCourtMap[${m.id}] = parseInt(this.value, 10)" class="bg-slate-800 border border-slate-700 rounded-2xl px-3 py-2 text-sm text-slate-100 outline-none">
+                                    ${availableCourts.map(c => `<option value="${c.id}" ${c.id == selectedCourt ? 'selected' : ''}>${c.name}</option>`).join('')}
+                                </select>
+                            ` : `
+                                <div class="text-xs text-slate-200 px-3 py-2 rounded-2xl bg-slate-800">Send to ${availableCourts[0].name}</div>
+                            `}
+                            <div class="flex gap-2">
+                                <button onclick="confirmSendToCourt(${m.id})" class="flex-1 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-2 rounded-2xl text-sm">
+                                    Confirm
+                                </button>
+                                <button onclick="cancelCourtSelection()" class="flex-1 bg-slate-700 hover:bg-slate-600 text-slate-100 font-bold py-2 rounded-2xl text-sm">
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    ` : ''}
+                    ${m.isEditing ? `
+                        <div class="mt-3 rounded-xl border border-slate-700/60 p-3 bg-slate-900/40">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div class="space-y-2">
+                                    <div class="text-[9px] font-black text-emerald-500 tracking-wider uppercase">Team 1 Options</div>
+                                    <div class="flex gap-1">
+                                        <select id="staged-${m.id}-p1" class="w-full bg-slate-800 border border-slate-600 p-1.5 rounded-lg text-xs outline-none text-white">${genOptions(m.p1, [m.p1,m.p2,m.p3,m.p4])}</select>
+                                        <button onclick="triggerInlineAutoReplace(${m.id}, 'staged-${m.id}-p1')" type="button" class="bg-blue-600/20 text-blue-400 border border-blue-500/30 hover:bg-blue-600 hover:text-white px-2 rounded-lg text-[10px] font-bold transition"><i class="fas fa-magic"></i></button>
+                                    </div>
+                                    <div class="flex gap-1">
+                                        <select id="staged-${m.id}-p2" class="w-full bg-slate-800 border border-slate-600 p-1.5 rounded-lg text-xs outline-none text-white">${genOptions(m.p2, [m.p1,m.p2,m.p3,m.p4])}</select>
+                                        <button onclick="triggerInlineAutoReplace(${m.id}, 'staged-${m.id}-p2')" type="button" class="bg-blue-600/20 text-blue-400 border border-blue-500/30 hover:bg-blue-600 hover:text-white px-2 rounded-lg text-[10px] font-bold transition"><i class="fas fa-magic"></i></button>
+                                    </div>
+                                </div>
+                                <div class="space-y-2">
+                                    <div class="text-[9px] font-black text-blue-500 tracking-wider uppercase">Team 2 Options</div>
+                                    <div class="flex gap-1">
+                                        <select id="staged-${m.id}-p3" class="w-full bg-slate-800 border border-slate-600 p-1.5 rounded-lg text-xs outline-none text-white">${genOptions(m.p3, [m.p1,m.p2,m.p3,m.p4])}</select>
+                                        <button onclick="triggerInlineAutoReplace(${m.id}, 'staged-${m.id}-p3')" type="button" class="bg-blue-600/20 text-blue-400 border border-blue-500/30 hover:bg-blue-600 hover:text-white px-2 rounded-lg text-[10px] font-bold transition"><i class="fas fa-magic"></i></button>
+                                    </div>
+                                    <div class="flex gap-1">
+                                        <select id="staged-${m.id}-p4" class="w-full bg-slate-800 border border-slate-600 p-1.5 rounded-lg text-xs outline-none text-white">${genOptions(m.p4, [m.p1,m.p2,m.p3,m.p4])}</select>
+                                        <button onclick="triggerInlineAutoReplace(${m.id}, 'staged-${m.id}-p4')" type="button" class="bg-blue-600/20 text-blue-400 border border-blue-500/30 hover:bg-blue-600 hover:text-white px-2 rounded-lg text-[10px] font-bold transition"><i class="fas fa-magic"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex gap-2 mt-3">
+                                <button onclick="cancelStagedEdit(${m.id})" class="flex-1 py-2 bg-slate-700 hover:bg-slate-600 text-slate-100 font-bold rounded-xl">Cancel</button>
+                                <button onclick="saveStagedMatchEdits(${m.id})" class="flex-1 py-2 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold rounded-xl">Apply</button>
+                            </div>
+                        </div>
+                    ` : ''}
+                    ${availableCourts.length === 0 ? '<div class="text-xs text-rose-300">No available courts right now. Add or free a court first.</div>' : ''}
+                </div>
+            `;
+        }).join('');
+    }
+
+    function buildMatchFromSelected(selectedPlayers) {
+        // Ensure we have 4 players
+        if (!Array.isArray(selectedPlayers) || selectedPlayers.length < 4) return null;
+
+        // Copy to avoid mutating original array
+        const copy = [...selectedPlayers];
+
+        // Determine ranking source: RT Mode uses Dots, otherwise use Winrate
+        if (rtMode) {
+            copy.sort((a, b) => (b.ratingValue || 0) - (a.ratingValue || 0));
+        } else {
+            copy.sort((a, b) => getWinRate(b) - getWinRate(a));
+        }
+
+        let p1, p2, p3, p4;
+
+        // 1. GMT ON: Competitive (Top 2 vs Next 2)
+        if (gameTimeMode) {
+            p1 = copy[0].id;
+            p2 = copy[1].id;
+            p3 = copy[2].id;
+            p4 = copy[3].id;
+        }
+        // 2. RT ON or Default: Fair Pairing (Top/Beginner vs Middle/Advanced)
+        else {
+            p1 = copy[0].id; // Advance (Rank 1)
+            p2 = copy[3].id; // Beginner (Rank 4)
+            p3 = copy[1].id; // Advance (Rank 2)
+            p4 = copy[2].id; // Beginner (Rank 3)
+        }
+
+        return { id: Date.now(), p1, p2, p3, p4, isEditing: false };
+    }
+
+    function dismissStaged(id) {
+        const idx = upNextDeck.findIndex(m => m.id == id);
+        if (idx === -1) return;
+        const m = upNextDeck.splice(idx, 1)[0];
+
+        [m.p1, m.p2, m.p3, m.p4].forEach(pid => {
+            const p = players.find(x => x.id == pid);
+            if (p) {
+                p.status = 'Queued';
+                p.queuedAt = Date.now();
+                if (!waitingQueue.includes(pid)) waitingQueue.push(pid);
+            }
+        });
+
+        saveToStorage();
+        renderSystem();
+    }
+
+    // --- SYNC LAYER ---
+    const API_BASE = "http://localhost:8000"; // Update this for production/LAN
+
+    async function syncWithBackend() {
+        const syncStatus = document.getElementById('sync-status');
+        try {
+            // First, push any unsynced players from IndexedDB
+            const unsyncedPlayers = await db.players.toArray();
+            for (const p of unsyncedPlayers) {
+                if (!p.synced) {
+                    const formData = new FormData();
+                    formData.append("name", p.name);
+                    if (p.photoBlob) formData.append("photo", p.photoBlob, `${p.name}.jpg`);
+
+                    const res = await fetch(`${API_BASE}/api/players`, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    if (res.ok) {
+                        await db.players.update(p.id, { synced: true });
+                    }
+                }
+            }
+
+            const response = await fetch(`${API_BASE}/api/players`);
+            if (response.ok) {
+                const globalPlayers = await response.json();
+                syncStatus.className = "ml-2 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-500";
+                syncStatus.innerHTML = '<i class="fas fa-check-circle text-[8px] mr-1"></i> Synced';
+                return globalPlayers;
+            }
+        } catch (e) {
+            console.log("Offline mode: Backend unreachable", e);
+            syncStatus.className = "ml-2 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-500";
+            syncStatus.innerHTML = '<i class="fas fa-exclamation-triangle text-[8px] mr-1"></i> Offline';
+        }
+        return null;
+    }
+
+    async function showGlobalStats() {
+        document.getElementById('global-stats-modal').classList.remove('hidden');
+        renderGlobalStatsTable();
+    }
+
+    function showRecentPlayers() {
+        document.getElementById('recent-players-modal').classList.remove('hidden');
+        renderRecentPlayersList();
+    }
+
+    function closeRecentPlayers() {
+        document.getElementById('recent-players-modal').classList.add('hidden');
+    }
+
+    async function renderRecentPlayersList() {
+        const list = document.getElementById('recent-players-list');
+        list.innerHTML = '<div class="text-center py-8 text-slate-500"><i class="fas fa-spinner fa-spin mr-2"></i> Loading recent players...</div>';
+
+        // Reset "Select All" checkbox
+        const selectAllBox = document.getElementById('select-all-recent');
+        if (selectAllBox) selectAllBox.checked = false;
+
+        try {
+            // Fetch all players from global DB, sort by lastSeen desc
+            let globalPlayers = await db.players.toArray();
+            globalPlayers.sort((a, b) => (b.lastSeen || 0) - (a.lastSeen || 0));
+
+            // Filter out players already in the current session (active or archived)
+            const sessionNames = new Set(players.concat(archivedPlayers).map(p => p.name.toLowerCase()));
+            const recentOnes = globalPlayers.filter(p => !sessionNames.has(p.name.toLowerCase())).slice(0, 15);
+
+            if (recentOnes.length === 0) {
+                list.innerHTML = `
+                    <div class="text-center py-10 px-4">
+                        <i class="fas fa-users-slash text-4xl text-slate-700 mb-3"></i>
+                        <p class="text-slate-400 text-sm font-bold">No previous players found.</p>
+                        <p class="text-slate-500 text-xs mt-1">Players will appear here after their first session.</p>
+                    </div>`;
+                return;
+            }
+
+            list.innerHTML = recentOnes.map(p => {
+                const photoUrl = getPhotoUrl(p);
+                const safeName = p.name.replace(/'/g, "\\'");
+                return `
+                    <div class="bg-slate-800/40 border border-slate-700/50 p-3 rounded-2xl flex justify-between items-center hover:border-emerald-500/30 transition-all group">
+                        <div class="flex items-center gap-3">
+                            <input type="checkbox" name="recent-player-checkbox" value="${safeName}" class="w-4 h-4 rounded border-slate-600 bg-slate-700 text-emerald-500 focus:ring-emerald-500 accent-emerald-500 cursor-pointer">
+                            <div class="relative">
+                                <img src="${photoUrl}" class="w-10 h-10 rounded-full object-cover border border-slate-700">
+                            </div>
+                            <div class="flex flex-col">
+                                <span class="font-bold text-slate-200 group-hover:text-white transition">${p.name}</span>
+                                <span class="text-[9px] text-amber-500 font-bold uppercase tracking-wider">${p.ratingLevel || 'Unrated'}</span>
+                            </div>
+                        </div>
+                        <button onclick="addGlobalPlayerToSession('${safeName}')" class="bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-slate-950 px-4 py-2 rounded-xl font-black text-[10px] uppercase tracking-widest transition shadow-sm">
+                            Select
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        } catch (e) {
+            console.error(e);
+            list.innerHTML = '<div class="text-center py-8 text-rose-500">Error loading recent players.</div>';
+        }
+    }
+
+    function toggleSelectAllRecent(checked) {
+        const checkboxes = document.querySelectorAll('input[name="recent-player-checkbox"]');
+        checkboxes.forEach(cb => cb.checked = checked);
+    }
+
+    async function addSelectedRecentPlayers() {
+        const selectedCheckboxes = document.querySelectorAll('input[name="recent-player-checkbox"]:checked');
+        const names = Array.from(selectedCheckboxes).map(cb => cb.value);
+
+        if (names.length === 0) return alert("Please select at least one player.");
+
+        for (const name of names) {
+            // We'll refactor addGlobalPlayerToSession to allow silent adds
+            await addGlobalPlayerToSession(name, true);
+        }
+
+        saveToStorage();
+        renderSystem();
+        closeRecentPlayers();
+    }
+
+    function setStatsTab(tab) {
+        statsCurrentTab = tab;
+        // Update UI
+        document.getElementById('tab-leaderboard').className = (tab === 'leaderboard' ? 'stats-tab-active' : 'stats-tab-inactive') + ' py-1';
+        document.getElementById('tab-awards').className = (tab === 'awards' ? 'stats-tab-active' : 'stats-tab-inactive') + ' py-1';
+
+        // Default sort
+        if (tab === 'awards') {
+            statsSortKey = 'medals';
+            statsSortDesc = true;
+        } else {
+            statsSortKey = 'winrate';
+            statsSortDesc = true;
+        }
+
+        renderGlobalStatsTable();
+    }
+
+    function setStatsSort(key) {
+        if (statsSortKey === key) {
+            statsSortDesc = !statsSortDesc;
+        } else {
+            statsSortKey = key;
+            statsSortDesc = true;
+        }
+        renderGlobalStatsTable();
+    }
+
+    async function renderGlobalStatsTable() {
+        const body = document.getElementById('global-stats-body');
+        const thead = document.querySelector('#global-stats-modal thead tr');
+        body.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-slate-500">Loading global stats...</td></tr>';
+
+        let globalPlayers = await db.players.toArray();
+        const skillFilter = document.getElementById('stats-skill-filter').value;
+
+        // Apply Skill Filter
+        if (skillFilter !== 'all') {
+            const filterVal = parseFloat(skillFilter);
+            globalPlayers = globalPlayers.filter(p => p.ratingValue === filterVal);
+        }
+
+        if (statsCurrentTab === 'awards') {
+            // Update Header for Awards
+            thead.innerHTML = `
+                <th class="px-4 py-2 cursor-pointer" onclick="setStatsSort('name')">Player <i class="fas fa-sort ml-1"></i></th>
+                <th class="px-4 py-2 text-center">Gold</th>
+                <th class="px-4 py-2 text-center">Silver</th>
+                <th class="px-4 py-2 text-center">Bronze</th>
+                <th class="px-4 py-2 text-center cursor-pointer" onclick="setStatsSort('medals')">Total Medals <i class="fas fa-sort ml-1"></i></th>
+                <th class="px-4 py-2 text-right">Action</th>
+            `;
+
+            globalPlayers.sort((a, b) => {
+                if (statsSortKey === 'name') {
+                    return statsSortDesc ? b.name.localeCompare(a.name) : a.name.localeCompare(b.name);
+                }
+                const getScore = (p) => {
+                    const g = p.awards?.filter(x => x.type === 'gold').length || 0;
+                    const s = p.awards?.filter(x => x.type === 'silver').length || 0;
+                    const b = p.awards?.filter(x => x.type === 'bronze').length || 0;
+                    if (statsSortKey === 'medals') return (g * 100) + (s * 10) + b;
+                    return g + s + b;
+                };
+                return statsSortDesc ? getScore(b) - getScore(a) : getScore(a) - getScore(b);
+            });
+
+            body.innerHTML = globalPlayers.map(p => {
+                const photoUrl = getPhotoUrl(p);
+                const golds = p.awards?.filter(a => a.type === 'gold').length || 0;
+                const silvers = p.awards?.filter(a => a.type === 'silver').length || 0;
+                const bronzes = p.awards?.filter(a => a.type === 'bronze').length || 0;
+
+                return `
+                    <tr class="border-b border-slate-800 hover:bg-slate-800/50 transition">
+                        <td class="px-4 py-3 flex items-center gap-3">
+                            <img src="${photoUrl}" class="w-8 h-8 rounded-full object-cover">
+                            <div class="flex flex-col">
+                                <span class="font-bold text-slate-100">${p.name}</span>
+                                <span class="text-[9px] text-amber-500 font-bold uppercase">${p.ratingLevel || 'Unrated'}</span>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3 text-center text-amber-400 font-bold">${golds}</td>
+                        <td class="px-4 py-3 text-center text-slate-300 font-bold">${silvers}</td>
+                        <td class="px-4 py-3 text-center text-amber-700 font-bold">${bronzes}</td>
+                        <td class="px-4 py-3 text-center text-emerald-500 font-bold">${golds + silvers + bronzes}</td>
+                        <td class="px-4 py-3 text-right flex items-center justify-end gap-2">
+                            <button onclick="addGlobalPlayerToSession('${p.name}')" class="text-[10px] bg-emerald-500 hover:bg-emerald-600 text-slate-950 px-2 py-1 rounded font-bold transition">Add</button>
+                            <button onclick="removePlayerFromGlobalDB(${p.id})" class="text-slate-400 hover:text-rose-500 transition px-1"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+            return;
+        }
+
+        // Original Leaderboard Header
+        thead.innerHTML = `
+            <th class="px-4 py-2 cursor-pointer" onclick="setStatsSort('name')">Player <i class="fas fa-sort ml-1"></i></th>
+            <th class="px-4 py-2 cursor-pointer" onclick="setStatsSort('winrate')">Winrate <i class="fas fa-sort ml-1"></i></th>
+            <th class="px-4 py-2 cursor-pointer" onclick="setStatsSort('totalGames')">Games <i class="fas fa-sort ml-1"></i></th>
+            <th class="px-4 py-2 cursor-pointer" onclick="setStatsSort('totalWins')">Wins <i class="fas fa-sort ml-1"></i></th>
+            <th class="px-4 py-2">Frequency</th>
+            <th class="px-4 py-2 text-right">Action</th>
+        `;
+
+        globalPlayers.sort((a, b) => {
+            if (statsSortKey === 'name') {
+                return statsSortDesc ? b.name.localeCompare(a.name) : a.name.localeCompare(b.name);
+            }
+            const getVal = (p, key) => {
+                if (key === 'winrate') return p.totalGames === 0 ? 0 : (p.totalWins / p.totalGames);
+                return p[key] || 0;
+            };
+            return statsSortDesc ? getVal(b, statsSortKey) - getVal(a, statsSortKey) : getVal(a, statsSortKey) - getVal(b, statsSortKey);
+        });
+
+        body.innerHTML = globalPlayers.map(p => {
+            const photoUrl = getPhotoUrl(p);
+            const winRate = p.totalGames === 0 ? 0 : Math.round((p.totalWins / p.totalGames) * 100);
+            return `
+                <tr class="border-b border-slate-800 hover:bg-slate-800/50 transition">
+                    <td class="px-4 py-3 flex items-center gap-3">
+                        <img src="${photoUrl}" class="w-8 h-8 rounded-full object-cover">
+                        <div class="flex flex-col">
+                            <span class="font-bold text-slate-100">${p.name}</span>
+                            <span class="text-[9px] text-amber-500 font-bold uppercase">${p.ratingLevel || 'Unrated'}</span>
+                        </div>
+                    </td>
+                    <td class="px-4 py-3 text-emerald-500 font-bold">${winRate}%</td>
+                    <td class="px-4 py-3 text-slate-300">${p.totalGames || 0}</td>
+                    <td class="px-4 py-3 text-slate-300">${p.totalWins || 0}</td>
+                    <td class="px-4 py-3 text-slate-500">${p.totalGames || 0} Matches</td>
+                    <td class="px-4 py-3 text-right flex items-center justify-end gap-2">
+                        <button onclick="addGlobalPlayerToSession('${p.name}')" class="text-[10px] bg-emerald-500 hover:bg-emerald-600 text-slate-950 px-2 py-1 rounded font-bold transition">Add</button>
+                        <button onclick="removePlayerFromGlobalDB(${p.id})" class="text-slate-400 hover:text-rose-500 transition px-1"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    async function removePlayerFromGlobalDB(id) {
+        if (!confirm("Permanently delete this player and all their history from the global database?")) return;
+        await db.players.delete(id);
+        renderGlobalStatsTable();
+    }
+
+    function closeGlobalStats() {
+        document.getElementById('global-stats-modal').classList.add('hidden');
+    }
+
+    function showGuide() {
+        document.getElementById('guide-modal').classList.remove('hidden');
+    }
+
+    function closeGuide() {
+        document.getElementById('guide-modal').classList.add('hidden');
+    }
+
+    async function addGlobalPlayerToSession(name, isSilent = false) {
+        const gp = await db.players.where('name').equals(name).first();
+        if (!gp) return;
+
+        const nameExists = players.concat(archivedPlayers).some(p => p.name && p.name.toLowerCase() === name.toLowerCase());
+        if (nameExists) {
+            if (!isSilent) alert("This player is already in the current session.");
+            if (!isSilent) closeGlobalStats();
+            if (!isSilent) closeRecentPlayers();
+            return;
+        }
+
+        const now = new Date();
+        const p = {
+            id: Date.now() + Math.floor(Math.random() * 1000), // Add randomness for batch additions
+            name: gp.name,
+            status: 'Available',
+            wins: 0,
+            games: 0,
+            ratingLevel: gp.ratingLevel || 'Unrated',
+            ratingValue: gp.ratingValue || null,
+            justPlayed: false,
+            queuedAt: null,
+            checkInTime: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            checkInEpoch: now.getTime(),
+            checkOutTime: "Active",
+            totalIdleMs: 0,
+            idleStartedAt: null,
+            photoBlob: gp.photoBlob
+        };
+
+        // Update lastSeen in Global DB
+        await db.players.update(gp.id, { lastSeen: Date.now() });
+
+        players.push(p);
+
+        if (!isSilent) {
+            saveToStorage();
+            renderSystem();
+            closeGlobalStats();
+            closeRecentPlayers();
+            sendToQueue(p.id);
+        } else {
+            // For silent adds, we still want them in the queue immediately
+            p.status = 'Queued';
+            p.queuedAt = Date.now();
+            if (!waitingQueue.includes(p.id)) waitingQueue.push(p.id);
+        }
+    }
+
+    async function openPlayerProfile(id) {
+        const p = players.find(x => x.id == id);
+        if (!p) return;
+
+        editingPlayerId = id;
+
+        // Basic Info
+        document.getElementById('modal-player-name').innerText = p.name;
+        document.getElementById('modal-profile-img').src = getPhotoUrl(p);
+
+        const badge = document.getElementById('modal-player-rating-badge');
+        badge.innerText = p.ratingLevel || 'Unrated';
+        badge.classList.toggle('hidden', !rtMode);
+
+        // Awards display
+        const gp = await db.players.where('name').equals(p.name).first();
+        const awardsContainer = document.getElementById('modal-player-awards');
+        if (gp && gp.awards && gp.awards.length > 0) {
+            awardsContainer.innerHTML = gp.awards.map((award, index) => {
+                const colors = { gold: 'text-amber-400', silver: 'text-slate-300', bronze: 'text-amber-700' };
+                return `<i class="fas fa-medal ${colors[award.type]} text-2xl cursor-pointer hover:scale-110 transition" onclick="showMedalDetail(${JSON.stringify(award).replace(/"/g, '&quot;')})"></i>`;
+            }).join('');
+        } else {
+            awardsContainer.innerHTML = '';
+        }
+
+        // Session Stats
+        const sessionWinRate = getWinRate(p);
+        document.getElementById('modal-session-stats').innerText = `${p.wins}W / ${p.games - p.wins}L (${sessionWinRate}%)`;
+
+        // Global Stats from DB
+        if (gp) {
+            const gWR = gp.totalGames === 0 ? 0 : Math.round((gp.totalWins / gp.totalGames) * 100);
+            document.getElementById('modal-global-stats').innerText = `${gp.totalWins}W / ${gp.totalGames - gp.totalWins}L (${gWR}%)`;
+            document.getElementById('modalPlayerRating').value = gp.ratingValue || "";
+        }
+
+        document.getElementById('player-profile-modal').classList.remove('hidden');
+    }
+
+    function showMedalDetail(award) {
+        const colors = { gold: 'text-amber-400', silver: 'text-slate-300', bronze: 'text-amber-700' };
+        const titles = { gold: 'Gold Medalist', silver: 'Silver Medalist', bronze: 'Bronze Medalist' };
+
+        document.getElementById('medal-detail-icon').innerHTML = `<i class="fas fa-medal ${colors[award.type]}"></i>`;
+        document.getElementById('medal-detail-title').innerText = titles[award.type];
+        document.getElementById('medal-detail-date').innerText = award.date;
+        document.getElementById('medal-detail-stats').innerText = `${award.wins}W / ${award.games - award.wins}L`;
+
+        document.getElementById('medal-detail-modal').classList.remove('hidden');
+    }
+
+    function closeMedalDetail() {
+        document.getElementById('medal-detail-modal').classList.add('hidden');
+    }
+
+    function closePlayerProfile() {
+        document.getElementById('player-profile-modal').classList.add('hidden');
+        editingPlayerId = null;
+    }
+
+    function showPhotoModalFromProfile() {
+        // Prepare photo modal for current player
+        const p = players.find(x => x.id == editingPlayerId);
+        if (!p) return;
+
+        document.getElementById('photo-modal-title').innerText = `Change Photo: ${p.name}`;
+        const preview = document.getElementById('photo-preview');
+        const placeholder = document.getElementById('camera-placeholder');
+
+        const photoUrl = getPhotoUrl(p);
+        if (photoUrl !== 'logo.jpg') {
+            preview.src = photoUrl;
+            preview.classList.remove('hidden');
+            placeholder.classList.add('hidden');
+        } else {
+            preview.classList.add('hidden');
+            placeholder.classList.remove('hidden');
+        }
+
+        // Note: Done button in photo modal will handle the save
+        document.getElementById('player-profile-modal').classList.add('hidden');
+        showPhotoModal();
+    }
+
+    async function saveProfileChanges() {
+        const p = players.find(x => x.id == editingPlayerId);
+        if (!p) return closePlayerProfile();
+
+        const newRatingVal = parseFloat(document.getElementById('modalPlayerRating').value);
+        if (!isNaN(newRatingVal)) {
+            p.ratingValue = newRatingVal;
+            p.ratingLevel = RATING_LEVELS.find(r => r.value === newRatingVal).label;
+        }
+
+        // Update Global DB
+        const gp = await db.players.where('name').equals(p.name).first();
+        if (gp) {
+            await db.players.update(gp.id, {
+                ratingValue: p.ratingValue,
+                ratingLevel: p.ratingLevel,
+                photoBlob: p.photoBlob // Sync photo blob to DB on any save
+            });
+        }
+
+        saveToStorage();
+        renderSystem();
+        closePlayerProfile();
+    }
+
+    async function handleNameInput(val) {
+        if (!val) return;
+        const list = document.getElementById('player-suggestions');
+        const matches = await db.players.where('name').startsWithIgnoreCase(val).toArray();
+        list.innerHTML = matches.map(m => `<option value="${m.name}">`).join('');
+    }
+
+    async function editPlayerProfile(id) {
+        const p = players.find(x => x.id == id);
+        if (!p) return;
+
+        editingPlayerId = id;
+        document.getElementById('photo-modal-title').innerText = `Edit ${p.name}`;
+
+        const preview = document.getElementById('photo-preview');
+        const placeholder = document.getElementById('camera-placeholder');
+
+        const photoUrl = getPhotoUrl(p);
+        if (photoUrl !== 'logo.jpg') {
+            preview.src = photoUrl;
+            preview.classList.remove('hidden');
+            placeholder.classList.add('hidden');
+        } else {
+            preview.classList.add('hidden');
+            placeholder.classList.remove('hidden');
+        }
+
+        // Show rating edit regardless of RT mode state
+        document.getElementById('edit-rating-container').classList.remove('hidden');
+        document.getElementById('editPlayerRating').value = p.ratingValue || "";
+        document.getElementById('photo-done-btn').classList.remove('hidden');
+
+        showPhotoModal();
+    }
+
+    async function savePhotoEdit() {
+        const p = players.find(x => x.id == editingPlayerId);
+        if (!p) return closePhotoModal();
+
+        if (currentPhotoBlob) {
+            updatePlayerPhoto(p, currentPhotoBlob);
+        }
+
+        // Update DB
+        const gp = await db.players.where('name').equals(p.name).first();
+        if (gp) {
+            await db.players.update(gp.id, {
+                photoBlob: p.photoBlob
+            });
+        }
+
+        saveToStorage();
+        renderSystem();
+        closePhotoModal();
+        // Re-open profile to refresh the photo display
+        if (editingPlayerId) openPlayerProfile(editingPlayerId);
+    }
+
+    // --- PHOTO HANDLING ---
+    let currentStream = null;
+    let currentPhotoBlob = null;
+
+    function startCamera() {
+        const video = document.getElementById('camera-preview');
+        const placeholder = document.getElementById('camera-placeholder');
+        const startBtn = document.getElementById('start-camera');
+        const captureBtn = document.getElementById('capture-photo');
+
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } })
+            .then(stream => {
+                currentStream = stream;
+                video.srcObject = stream;
+                video.classList.remove('hidden');
+                placeholder.classList.add('hidden');
+                startBtn.classList.add('hidden');
+                captureBtn.classList.remove('hidden');
+            })
+            .catch(err => alert("Camera error: " + err));
+    }
+
+    function capturePhoto() {
+        const video = document.getElementById('camera-preview');
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        canvas.getContext('2d').drawImage(video, 0, 0);
+
+        canvas.toBlob(blob => {
+            currentPhotoBlob = blob;
+            const url = URL.createObjectURL(blob);
+            const preview = document.getElementById('photo-preview');
+            preview.src = url;
+            preview.classList.remove('hidden');
+            video.classList.add('hidden');
+            stopCamera();
+            // Show Done button
+            document.getElementById('photo-done-btn').classList.remove('hidden');
+        }, 'image/jpeg');
+    }
+
+    function stopCamera() {
+        if (currentStream) {
+            currentStream.getTracks().forEach(track => track.stop());
+            currentStream = null;
+        }
+    }
+
+    function handleFileSelect(event) {
+        const file = event.target.files[0];
+        if (file) {
+            currentPhotoBlob = file;
+            const url = URL.createObjectURL(file);
+            const preview = document.getElementById('photo-preview');
+            preview.src = url;
+            preview.classList.remove('hidden');
+            document.getElementById('camera-placeholder').classList.add('hidden');
+            document.getElementById('camera-preview').classList.add('hidden');
+            // Show Done button
+            document.getElementById('photo-done-btn').classList.remove('hidden');
+        }
+    }
+
+    function showPhotoModal() {
+        document.getElementById('photo-modal').classList.remove('hidden');
+    }
+
+    function closePhotoModal() {
+        stopCamera();
+        document.getElementById('photo-modal').classList.add('hidden');
+        // Reset UI
+        document.getElementById('camera-preview').classList.add('hidden');
+        document.getElementById('photo-preview').classList.add('hidden');
+        document.getElementById('camera-placeholder').classList.remove('hidden');
+        document.getElementById('start-camera').classList.remove('hidden');
+        document.getElementById('capture-photo').classList.add('hidden');
+        document.getElementById('photo-done-btn').classList.add('hidden');
+        document.getElementById('edit-rating-container').classList.add('hidden');
+        editingPlayerId = null;
+    }
+
+    async function addPlayer() {
+        const inp = document.getElementById('newPlayerName');
+        const name = inp.value.trim();
+        if (!name) return;
+
+        const nameExists = players.concat(archivedPlayers).some(p => p.name && p.name.toLowerCase() === name.toLowerCase());
+        if (nameExists) return alert("A player with that name already exists in this session.");
+
+        const now = new Date();
+
+        // Check if player exists in global DB to pull stats
+        const globalPlayer = await db.players.where('name').equals(name).first();
+
+        // If exact match exists in DB, we use its rating
+        let finalRatingValue = globalPlayer ? globalPlayer.ratingValue : null;
+
+        const p = {
+            id: Date.now(),
+            name: name,
+            status: 'Available',
+            wins: 0,
+            games: 0,
+            ratingLevel: !isNaN(finalRatingValue) && finalRatingValue !== null ? RATING_LEVELS.find(r => r.value === finalRatingValue).label : 'Unrated',
+            ratingValue: !isNaN(finalRatingValue) && finalRatingValue !== null ? finalRatingValue : null,
+            justPlayed: false,
+            queuedAt: null,
+            checkInTime: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            checkInEpoch: now.getTime(),
+            checkOutTime: "Active",
+            totalIdleMs: 0,
+            idleStartedAt: null,
+            photoBlob: currentPhotoBlob || (globalPlayer ? globalPlayer.photoBlob : null)
+        };
+
+        // Save/Update in IndexedDB (Global Store)
+        if (globalPlayer) {
+            await db.players.update(globalPlayer.id, {
+                ratingLevel: p.ratingLevel,
+                ratingValue: p.ratingValue,
+                photoBlob: p.photoBlob || globalPlayer.photoBlob,
+                lastSeen: now.getTime()
+            });
+        } else {
+            await db.players.add({
+                name: p.name,
+                photoBlob: p.photoBlob,
+                ratingLevel: p.ratingLevel,
+                ratingValue: p.ratingValue,
+                totalGames: 0,
+                totalWins: 0,
+                lastSeen: now.getTime()
+            });
+        }
+
+        players.push(p);
+        inp.value = '';
+        currentPhotoBlob = null;
+        closePhotoModal();
+        sendToQueue(p.id);
+    }
+
+    function sendToQueue(id) {
+        const p = players.find(x => x.id == id);
+        if (!p) return;
+        p.status = 'Queued';
+        p.queuedAt = Date.now(); // Start wait timer
+        if (!waitingQueue.includes(id)) waitingQueue.push(id);
+        saveToStorage();
+        renderSystem();
+    }
+
+    function autoMatchmake() {
+        if (waitingQueue.length < 4) return alert("Need at least 4 players in queue");
+        if (!canStageNewMatch()) return alert("Locked mode: cannot stage more matches than there are courts");
+
+        const allFull = courts.length > 0 && courts.every(c => c.status === 'Occupied');
+        if (allFull && !allowStagingWhenFull) return alert("All courts are occupied. Enable 'Unlocked' to prepare next matches while courts are full.");
+
+        // Map queue IDs back to full player objects and filter invalid entries
+        let queuePool = waitingQueue.map(id => players.find(p => p.id === id)).filter(Boolean);
+
+        // Sort by fairness score to establish priority (0 games first, then FIFO)
+        queuePool.sort((a, b) => getPlayerFairnessScore(a).score - getPlayerFairnessScore(b).score);
+
+        let selectedPlayers = [];
+
+        if (fairQueueMode) {
+            // FairQ: Strictly Skill-Based Matching around the Anchor
+            // 1. Anchor is the longest-waiting player (or newcomer)
+            const anchor = queuePool[0];
+            selectedPlayers.push(anchor);
+
+            // 2. Find 3 others closest in skill rating
+            const remainingPool = queuePool.slice(1);
+            remainingPool.sort((a, b) => {
+                const diffA = Math.abs((a.ratingValue || 0) - (anchor.ratingValue || 0));
+                const diffB = Math.abs((b.ratingValue || 0) - (anchor.ratingValue || 0));
+                if (diffA !== diffB) return diffA - diffB;
+                // If skill diff is same, prioritize wait time
+                return getPlayerFairnessScore(a).score - getPlayerFairnessScore(b).score;
+            });
+
+            selectedPlayers.push(...remainingPool.slice(0, 3));
+        } else {
+            // Default: Strictly Fair Rotation (FIFO)
+            // 1. Take the top 4 based on rotation priority
+            selectedPlayers = queuePool.slice(0, 4);
+            let selectedIds = selectedPlayers.map(p => p.id);
+
+            // 2. Check for exact 4-player lineup repeat
+            const signature = getMatchSignature(selectedIds);
+            const isRepeat = matchHistory.some(h => h.playerIds && getMatchSignature(h.playerIds) === signature);
+
+            if (isRepeat) {
+                if (queuePool.length >= 6) {
+                    // Swap at least 2 players (the 3rd and 4th) with the next 2 in line
+                    selectedPlayers = [queuePool[0], queuePool[1], queuePool[4], queuePool[5]];
+                } else if (queuePool.length >= 5) {
+                    // If only 5 available, swap at least 1 (the 4th)
+                    selectedPlayers = [queuePool[0], queuePool[1], queuePool[2], queuePool[4]];
+                }
+            }
+        }
+
+        const selectedIds = selectedPlayers.map(p => p.id);
+
+        // Update global queue structures and player states
+        waitingQueue = waitingQueue.filter(id => !selectedIds.includes(id));
+        selectedPlayers.forEach(p => p.status = 'Staged');
+
+        // Build the match deck using current pairing mode (GMT/RT/etc)
+        const match = buildMatchFromSelected(selectedPlayers);
+        upNextDeck.push(match);
+
+        saveToStorage();
+        renderSystem();
+    }
+
+
+    function getMatchSignature(ids) {
+        return ids.slice().sort((a, b) => a - b).join(',');
+    }
+
+    function havePlayedTogether(ids) {
+        const signature = getMatchSignature(ids);
+        return matchHistory.some(h => h.playerIds && getMatchSignature(h.playerIds) === signature);
+    }
+
+    function processPipeline() {
+        // SAFETY: Only auto-fill from deck if explicitly enabled (disabled by default for staged-first UX)
+        if (!autoFillFromDeck || upNextDeck.length === 0) return;
+        const preferredCourtId = getSelectedNextCourtId();
+        let c = courts.find(x => x.status === 'Available' && x.id === preferredCourtId);
+        if (!c) {
+            c = courts.find(x => x.status === 'Available');
+        }
+        if (c) fillCourtFromStaged(c.id);
+    }
+
+    function fillCourtFromStaged(cId) {
+        if (upNextDeck.length === 0) return;
+        const c = courts.find(x => x.id == cId);
+        const m = upNextDeck.shift();
+
+        // Calculate wait times for reporting
+        let matchWaitSummary = [];
+        [m.p1, m.p2, m.p3, m.p4].forEach(id => {
+            const p = players.find(x => x.id == id);
+            if(p) {
+                const waitMs = Date.now() - (p.queuedAt || Date.now());
+                matchWaitSummary.push({ name: p.name, waitTime: Math.round(waitMs / 60000) });
+                p.status = 'Playing';
+            }
+        });
+
+        c.status = 'Occupied';
+        m.startTime = Date.now(); // Start match timer
+        m.waitLog = matchWaitSummary; // Attach wait log to match data
+        c.currentMatch = m;
+        saveToStorage();
+        renderSystem();
+    }
+
+    async function resolveMatch(cId, winner) {
+        const c = courts.find(x => x.id == cId);
+        if (!c || !c.currentMatch) return alert('Match not found.');
+
+        const m = c.currentMatch;
+        const team1Ids = [parseInt(m.p1), parseInt(m.p2)];
+        const team2Ids = [parseInt(m.p3), parseInt(m.p4)];
+        const activeMatchIds = [...team1Ids, ...team2Ids];
+        m.waitLog = m.waitLog || [];
+
+        const durationMin = Math.round((Date.now() - (m.startTime || Date.now())) / 60000);
+
+        const sortedMatchIds = [...activeMatchIds].sort((a, b) => a - b);
+
+        const team1Names = team1Ids.map(id => players.find(p => p.id == id)?.name || archivedPlayers.find(p => p.id == id)?.name).join(' & ');
+        const team2Names = team2Ids.map(id => players.find(p => p.id == id)?.name || archivedPlayers.find(p => p.id == id)?.name).join(' & ');
+
+        // Record to history before clearing
+        const matchData = {
+            timestamp: new Date().toLocaleString(),
+            court: c.name,
+            team1: team1Names,
+            team2: team2Names,
+            winner: winner === 1 ? 'Team 1' : 'Team 2',
+            duration: durationMin,
+            playerWaits: m.waitLog.map(l => `${l.name}: ${l.waitTime}m`).join('; '),
+            waitData: m.waitLog, // Keep object for analysis
+            playerIds: sortedMatchIds
+        };
+        matchHistory.push(matchData);
+        await db.matchHistory.add(matchData);
+
+        players.forEach(p => {
+            if (!activeMatchIds.includes(p.id)) {
+                p.justPlayed = false;
+            }
+        });
+
+        for (const id of activeMatchIds) {
+            const p = players.find(x => x.id == id);
+            if (!p) continue;
+
+            const isWinner = (winner === 1 && team1Ids.includes(id)) || (winner === 2 && team2Ids.includes(id));
+
+            p.games++;
+            if (isWinner) p.wins++;
+
+            p.status = 'Queued';
+            p.justPlayed = true;
+            p.queuedAt = Date.now(); // Reset wait timer for next game
+            if (!waitingQueue.includes(id)) waitingQueue.push(id);
+
+            // Update Global Stats in IndexedDB
+            const gp = await db.players.where('name').equals(p.name).first();
+            if (gp) {
+                await db.players.update(gp.id, {
+                    totalGames: (gp.totalGames || 0) + 1,
+                    totalWins: (gp.totalWins || 0) + (isWinner ? 1 : 0),
+                    lastSeen: Date.now()
+                });
+            }
+        }
+
+        c.status = 'Available';
+        c.currentMatch = null;
+        c.isEditing = false;
+        saveToStorage();
+        renderSystem();
+    }
+
+    function removeMatchFromCourt(cId) {
+        const c = courts.find(x => x.id == cId);
+        if (!c || !c.currentMatch) return;
+        const m = c.currentMatch;
+
+        [m.p1, m.p2, m.p3, m.p4].forEach(id => {
+            const p = players.find(x => x.id == id);
+            if (p) {
+                p.status = 'Staged';
+            }
+        });
+
+        c.currentMatch = null;
+        c.status = 'Available';
+        c.isEditing = false;
+        upNextDeck.unshift(m);
+        saveToStorage();
+        renderSystem();
+    }
+
+    function toggleCourtEdit(cId, showState) {
+        const c = courts.find(x => x.id == cId);
+        if(c) {
+            c.isEditing = showState;
+            renderSystem(); // Force immediate re-render to catch input changes
+        }
+    }
+
+    function triggerInlineAutoReplace(courtId, selectElementId) {
+        if (waitingQueue.length === 0) return alert("The waiting queue is empty.");
+
+        // Identify all select elements for this specific court or staged match
+        const prefix = selectElementId.split('-').slice(0, 2).join('-'); // e.g. "edit-1" or "staged-123"
+        const siblingIds = [1, 2, 3, 4].map(n => `${prefix}-p${n}`);
+        const currentSelectedInUI = siblingIds
+            .map(id => document.getElementById(id))
+            .filter(el => el && el.id !== selectElementId)
+            .map(el => parseInt(el.value, 10))
+            .filter(v => !isNaN(v));
+
+        let queuePool = waitingQueue.map(id => players.find(p => p.id === id));
+
+        const sortWithTimeWeight = (a, b) => {
+            const hrsActiveA = Math.max((Date.now() - a.checkInEpoch) / 3600000, 0.1);
+            const hrsActiveB = Math.max((Date.now() - b.checkInEpoch) / 3600000, 0.1);
+            return (a.games / hrsActiveA) - (b.games / hrsActiveB);
+        };
+
+        // Filter out players already selected in other dropdowns for this match
+        let availableQueue = queuePool.filter(p => !currentSelectedInUI.includes(p.id));
+        if (availableQueue.length === 0) return alert("No other unique players available in queue.");
+
+        let freshPlayers = availableQueue.filter(p => !p.justPlayed).sort(sortWithTimeWeight);
+        let tiredPlayers = availableQueue.filter(p => p.justPlayed).sort(sortWithTimeWeight);
+        let absoluteFairestChoice = freshPlayers.length > 0 ? freshPlayers[0] : tiredPlayers[0];
+
+        const selectEl = document.getElementById(selectElementId);
+        if (!selectEl.querySelector(`option[value="${absoluteFairestChoice.id}"]`)) {
+            const opt = document.createElement('option');
+            opt.value = absoluteFairestChoice.id;
+            opt.innerText = `${absoluteFairestChoice.name} (Auto Picked)`;
+            selectEl.appendChild(opt);
+        }
+        selectEl.value = absoluteFairestChoice.id;
+    }
+
+    function genOptions(selectedId, currentMatchIds) {
+        // Updated to ensure players already on the court are always valid options
+        let availableOptions = players.filter(p => p.status === 'Queued' || currentMatchIds.includes(p.id));
+        let options = `<option value="">-- Select or Auto --</option>`;
+        options += `<option value="auto">AUTOPICK (Fairest Next)</option>`;
+        options += availableOptions.map(p => {
+            let note = p.justPlayed ? " [Just Played]" : "";
+            return `<option value="${p.id}" ${p.id == selectedId ? 'selected' : ''}>${p.name}${note} (${getWinRate(p)}% WR)</option>`;
+        }).join('');
+        return options;
+    }
+
+    function handleInlineSelectChange(cId, selectId) {
+        const selectEl = document.getElementById(selectId);
+        if (selectEl.value === 'auto') {
+            triggerInlineAutoReplace(cId, selectId);
+        }
+    }
+
+    function saveInlineMatchEdits(cId) {
+        const c = courts.find(x => x.id == cId);
+        if (!c) return;
+
+        const oldMatch = { ...c.currentMatch };
+
+        const n1 = parseInt(document.getElementById(`edit-${cId}-p1`).value);
+        const n2 = parseInt(document.getElementById(`edit-${cId}-p2`).value);
+        const n3 = parseInt(document.getElementById(`edit-${cId}-p3`).value);
+        const n4 = parseInt(document.getElementById(`edit-${cId}-p4`).value);
+
+        const newIds = [n1, n2, n3, n4];
+        if (newIds.some(isNaN)) return alert("Please select a player for all positions.");
+        if ((new Set(newIds)).size !== 4) return alert("Duplicate players selected.");
+
+        const oldIds = [oldMatch.p1, oldMatch.p2, oldMatch.p3, oldMatch.p4];
+
+        // Return players being removed to the queue
+        oldIds.forEach(id => {
+            if (!newIds.includes(id)) {
+                const p = players.find(x => x.id == id);
+                if (p) {
+                    p.status = 'Queued';
+                    p.queuedAt = Date.now();
+                    if (!waitingQueue.includes(id)) waitingQueue.push(id);
+                }
+            }
+        });
+
+        // Mark new players as playing
+        newIds.forEach(id => {
+            const p = players.find(x => x.id == id);
+            if (p) {
+                p.status = 'Playing';
+                waitingQueue = waitingQueue.filter(qid => qid !== id);
+            }
+        });
+
+        c.currentMatch.p1 = n1;
+        c.currentMatch.p2 = n2;
+        c.currentMatch.p3 = n3;
+        c.currentMatch.p4 = n4;
+
+        c.isEditing = false;
+        saveToStorage();
+        renderSystem();
+    }
+
+    // --- Staged match edit helpers (operate on upNextDeck entries) ---
+    function editStagedMatch(matchId) {
+        const m = upNextDeck.find(x => x.id == matchId);
+        if (!m) return;
+        m.isEditing = true;
+        renderSystem();
+    }
+
+    function cancelStagedEdit(matchId) {
+        const m = upNextDeck.find(x => x.id == matchId);
+        if (!m) return;
+        m.isEditing = false;
+        renderSystem();
+    }
+
+    function saveStagedMatchEdits(matchId) {
+        const idx = upNextDeck.findIndex(m => m.id == matchId);
+        if (idx === -1) return;
+        const staged = upNextDeck[idx];
+        const n1 = parseInt(document.getElementById(`staged-${matchId}-p1`).value);
+        const n2 = parseInt(document.getElementById(`staged-${matchId}-p2`).value);
+        const n3 = parseInt(document.getElementById(`staged-${matchId}-p3`).value);
+        const n4 = parseInt(document.getElementById(`staged-${matchId}-p4`).value);
+
+        const newIds = [n1, n2, n3, n4];
+        if (newIds.some(isNaN)) return alert("Please select a player for all positions.");
+        if ((new Set(newIds)).size !== 4) return alert("Duplicate players selected.");
+
+        const oldIds = [staged.p1, staged.p2, staged.p3, staged.p4];
+
+        // Return players being removed to the queue
+        oldIds.forEach(id => {
+            if (!newIds.includes(id)) {
+                const p = players.find(x => x.id == id);
+                if (p) {
+                    p.status = 'Queued';
+                    p.queuedAt = Date.now();
+                    if (!waitingQueue.includes(id)) waitingQueue.push(id);
+                }
+            }
+        });
+
+        // Mark new players as staged and remove them from waitingQueue
+        newIds.forEach(id => {
+            const p = players.find(x => x.id == id);
+            if (p) {
+                p.status = 'Staged';
+                waitingQueue = waitingQueue.filter(qid => qid !== id);
+            }
+        });
+
+        staged.p1 = n1;
+        staged.p2 = n2;
+        staged.p3 = n3;
+        staged.p4 = n4;
+
+        staged.isEditing = false;
+        saveToStorage();
+        renderSystem();
+    }
+
+    function addCourt() {
+        const n = courts.length + 1;
+        courts.push({ id: Date.now(), name: `Court ${n}`, status: "Available", currentMatch: null, isEditing: false });
+        saveToStorage();
+        renderSystem();
+    }
+
+    function removeCourt(courtId) {
+        const c = courts.find(x => x.id === courtId);
+        if (c && c.status === 'Occupied') return alert("Cannot remove an active court.");
+        courts = courts.filter(x => x.id !== courtId);
+        saveToStorage();
+        renderSystem();
+    }
+
+    function toggleManualCreator() {
+        const mc = document.getElementById('manual-creator');
+        mc.classList.toggle('hidden');
+        populateManualSelector();
+    }
+
+    function populateManualSelector() {
+        const container = document.getElementById('manual-selector-grid');
+        const avail = players.filter(p => p.status === 'Available' || p.status === 'Queued');
+
+        if(avail.length === 0) {
+            container.innerHTML = `<div class="col-span-full text-xs text-slate-500 italic py-2">No unassigned players available.</div>`;
+            return;
+        }
+
+        container.innerHTML = avail.map(p => `
+            <label class="flex items-center gap-2 bg-slate-700 dark:bg-slate-800 p-2 rounded-lg text-[10px] font-bold cursor-pointer text-white">
+                <input type="checkbox" name="manualP" value="${p.id}" class="accent-emerald-500"> ${p.name}
+            </label>
+        `).join('');
+    }
+
+    function createManualMatch() {
+        const sel = Array.from(document.querySelectorAll('input[name="manualP"]:checked')).map(x => parseInt(x.value));
+        if (sel.length !== 4) return alert("Select exactly 4 players");
+        if (!canStageNewMatch()) return alert("Locked mode: cannot stage more matches than there are courts");
+
+        const allFull = courts.length > 0 && courts.every(c => c.status === 'Occupied');
+        if (allFull && !allowStagingWhenFull) return alert("All courts are occupied. Enable 'Unlocked' to prepare next matches while courts are full.");
+
+        const selectedIds = [...sel].sort((a,b) => a - b);
+        const pen = computeOverlapPenalty(selectedIds);
+        if (pen.maxCommon >= 2) {
+            const msg = pen.maxCommon === 4
+                ? "These exact four players have already been matched together in the same lineup. Continue anyway?"
+                : `This selection shares ${pen.maxCommon} players with a recent match (some pairs have played together before). Continue anyway?`;
+            if (!confirm(msg)) return;
+        }
+
+        let selectedPlayers = sel.map(id => players.find(x => x.id == id));
+        selectedPlayers.forEach(p => {
+            p.status = 'Staged';
+            waitingQueue = waitingQueue.filter(q => q != p.id);
+        });
+
+        // For manual mode, we use the same pairing helper which will
+        // respect `gameTimeMode` when building teams.
+        const match = buildMatchFromSelected(selectedPlayers);
+        upNextDeck.push(match);
+
+        toggleManualCreator();
+        saveToStorage();
+        renderSystem();
+    }
+
+function setPlayerIdle(id) {
+const p = players.find(x => x.id == id);
+if (!p) return;
+
+p.status = 'Idle';
+p.idleStartedAt = Date.now(); // Start timing the idle period
+waitingQueue = waitingQueue.filter(qId => qId != id);
+
+saveToStorage();
+renderSystem();
+}
+
+function checkInFromIdle(id) {
+const p = players.find(x => x.id == id);
+if (!p) return;
+
+// Calculate elapsed idle time and add to cumulative total
+if (p.idleStartedAt) {
+    p.totalIdleMs += (Date.now() - p.idleStartedAt);
+    p.idleStartedAt = null; // Reset session tracker
+}
+
+p.status = 'Queued';
+p.justPlayed = false;
+
+// FIFO logic for returning from Idle:
+// Put them at the end of the current 'Queued' line,
+// which means their queuedAt should be Date.now().
+p.queuedAt = Date.now();
+
+waitingQueue.push(id);
+saveToStorage();
+renderSystem();
+}
+
+    function removePlayer(id) {
+const pIndex = players.findIndex(p => p.id == id);
+if (pIndex !== -1) {
+    const targetPlayer = players[pIndex];
+
+    // Check if player is in queue or playing
+    const isInQueue = waitingQueue.includes(id);
+    const playingCourt = courts.find(c => c.currentMatch &&
+        (c.currentMatch.p1 == id || c.currentMatch.p2 == id || c.currentMatch.p3 == id || c.currentMatch.p4 == id));
+
+    if (isInQueue || playingCourt) {
+        let msg = `Player "${targetPlayer.name}" is currently `;
+        if (isInQueue && playingCourt) msg += "queued and playing on " + playingCourt.name;
+        else if (isInQueue) msg += "in the queue";
+        else msg += "playing on " + playingCourt.name;
+        msg += ". Are you sure you want to check them out?";
+
+        if (!confirm(msg)) return;
+
+        // If playing, remove them from the court match by nulling their spot
+        if (playingCourt) {
+            if (playingCourt.currentMatch.p1 == id) playingCourt.currentMatch.p1 = null;
+            if (playingCourt.currentMatch.p2 == id) playingCourt.currentMatch.p2 = null;
+            if (playingCourt.currentMatch.p3 == id) playingCourt.currentMatch.p3 = null;
+            if (playingCourt.currentMatch.p4 == id) playingCourt.currentMatch.p4 = null;
+
+            // If all players are gone, clear the court
+            const m = playingCourt.currentMatch;
+            if (!m.p1 && !m.p2 && !m.p3 && !m.p4) {
+                playingCourt.status = "Available";
+                playingCourt.currentMatch = null;
+            }
+        }
+    }
+
+    // Final check: if they left while marked idle, close out their idle timer
+    if (targetPlayer.status === 'Idle' && targetPlayer.idleStartedAt) {
+        targetPlayer.totalIdleMs += (Date.now() - targetPlayer.idleStartedAt);
+        targetPlayer.idleStartedAt = null;
+    }
+
+    targetPlayer.checkOutTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    targetPlayer.checkOutEpoch = Date.now(); // Added to lock venue duration math
+    archivedPlayers.push(targetPlayer);
+    players.splice(pIndex, 1);
+}
+waitingQueue = waitingQueue.filter(qId => qId != id);
+saveToStorage();
+renderSystem();
+}
+
+async function checkOutAllPlayers() {
+    if (players.length === 0) return alert("No active players to check out.");
+    if (!confirm("Are you sure you want to check out all remaining active players to end open play?")) return;
+
+    await processAwards();
+
+    // Use a modified version of removal that skips internal confirms
+    const now = Date.now();
+    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    // We process the list in reverse to avoid splice issues if we weren't copying,
+    // but here we just iterate and perform the state moves manually to be fast and quiet.
+    while (players.length > 0) {
+        const p = players[0];
+
+        // Handle idle timer closure
+        if (p.status === 'Idle' && p.idleStartedAt) {
+            p.totalIdleMs = (p.totalIdleMs || 0) + (now - p.idleStartedAt);
+            p.idleStartedAt = null;
+        }
+
+        // Clean up playing status if on court
+        const playingCourt = courts.find(c => c.currentMatch &&
+            (c.currentMatch.p1 == p.id || c.currentMatch.p2 == p.id || c.currentMatch.p3 == p.id || c.currentMatch.p4 == p.id));
+        if (playingCourt) {
+            if (playingCourt.currentMatch.p1 == p.id) playingCourt.currentMatch.p1 = null;
+            if (playingCourt.currentMatch.p2 == p.id) playingCourt.currentMatch.p2 = null;
+            if (playingCourt.currentMatch.p3 == p.id) playingCourt.currentMatch.p3 = null;
+            if (playingCourt.currentMatch.p4 == p.id) playingCourt.currentMatch.p4 = null;
+            const m = playingCourt.currentMatch;
+            if (!m.p1 && !m.p2 && !m.p3 && !m.p4) {
+                playingCourt.status = "Available";
+                playingCourt.currentMatch = null;
+            }
+        }
+
+        p.checkOutTime = timeStr;
+        p.checkOutEpoch = now;
+        p.status = 'CheckedOut'; // Visual marker for history/reports
+        archivedPlayers.push(p);
+        players.splice(0, 1);
+    }
+
+    waitingQueue = [];
+    saveToStorage();
+    renderSystem();
+    alert("All players have been checked out.");
+}
+
+    // --- EXPORT FUNCTIONS ---
+    function downloadSummary() {
+        if (matchHistory.length === 0 && players.length === 0 && archivedPlayers.length === 0) return alert("No data to export.");
+        document.getElementById('export-modal').classList.remove('hidden');
+    }
+
+    function closeExportModal() {
+        document.getElementById('export-modal').classList.add('hidden');
+    }
+
+    function executeExport(type) {
+        closeExportModal();
+        const exportDate = new Date().toLocaleDateString();
+        const exportTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        // Ensure everyone is included: active players, archived/checked-out players
+        const completeRoster = [...players, ...archivedPlayers];
+
+        let waitMap = {};
+        // Initialize waitMap for every player in the roster to ensure they appear in the summary
+        completeRoster.forEach(p => {
+            waitMap[p.name] = { total: 0, count: 0 };
+        });
+
+        matchHistory.forEach(h => {
+            if (h.waitData) {
+                h.waitData.forEach(pWait => {
+                    if (!waitMap[pWait.name]) waitMap[pWait.name] = { total: 0, count: 0 };
+                    waitMap[pWait.name].total += pWait.waitTime;
+                    waitMap[pWait.name].count += 1;
+                });
+            }
+        });
+
+        const waitAverages = Object.keys(waitMap).map(name => ({
+            name,
+            avg: waitMap[name].count > 0 ? Math.round(waitMap[name].total / waitMap[name].count) : 0,
+            count: waitMap[name].count
+        })).sort((a,b) => b.avg - a.avg);
+
+        // Helper function to pull structural idle times safely
+        function getIdleDurationMin(p) {
+            let cumulative = p.totalIdleMs || 0;
+            if (p.status === 'Idle' && p.idleStartedAt) {
+                cumulative += (Date.now() - p.idleStartedAt);
+            }
+            return Math.round(cumulative / 60000);
+        }
+
+        // Adjusted dynamic venue time helper logic: (Check Out Epoch - Check In Epoch) - Idle Duration
+        function getVenueDurationMin(p) {
+            const endPoint = p.checkOutEpoch ? p.checkOutEpoch : Date.now();
+            const absoluteDurationMs = endPoint - (p.checkInEpoch || Date.now());
+            const totalIdleMs = (p.totalIdleMs || 0) + ((p.status === 'Idle' && p.idleStartedAt) ? (Date.now() - p.idleStartedAt) : 0);
+            const venueActiveDurationMs = absoluteDurationMs - totalIdleMs;
+            return Math.max(0, Math.round(venueActiveDurationMs / 60000));
+        }
+
+        if (type === 'excel') {
+            let csvRows = [];
+            csvRows.push(`JA1 Court Manager - Session Summary (${exportDate} ${exportTime})`);
+            csvRows.push("");
+
+            csvRows.push("PLAYER STATISTICS");
+            csvRows.push("Name,Status,Games Played,Wins,Losses,Win Rate (%),Idle Min,Venue Active Min,Check In,Check Out");
+            completeRoster.sort((a,b) => getWinRate(b) - getWinRate(a)).forEach(p => {
+                csvRows.push(`"${p.name}","${p.status}",${p.games},${p.wins},${p.games-p.wins},${getWinRate(p)}%,${getIdleDurationMin(p)},${getVenueDurationMin(p)},"${p.checkInTime}","${p.checkOutTime}"`);
+            });
+            csvRows.push("");
+
+            csvRows.push("WAIT TIME ANALYSIS");
+            csvRows.push("Player Name,Total Matches,Avg Wait Per Match (min)");
+            waitAverages.forEach(w => csvRows.push(`"${w.name}",${w.count},${w.avg}`));
+            csvRows.push("");
+
+            csvRows.push("SESSION MATCH HISTORY");
+            csvRows.push("Time,Court,Team 1,Team 2,Winner,Duration (min),Player Wait Times");
+            matchHistory.forEach(h => {
+                csvRows.push(`"${h.timestamp}","${h.court}","${h.team1}","${h.team2}","${h.winner}",${h.duration},"${h.playerWaits}"`);
+            });
+
+            const csvString = csvRows.join("\n");
+            const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.setAttribute("href", URL.createObjectURL(blob));
+            link.setAttribute("download", `JA1_Session_${exportDate.replace(/\//g,'-')}.csv`);
+            link.click();
+        } else {
+            const printWindow = window.open('', '_blank');
+            let html = `<html><head><title>JA1 Session Summary ${exportDate}</title><style>
+                body { font-family: 'Plus Jakarta Sans', sans-serif; padding: 40px; color: #1e293b; background: white; }
+                h1 { color: #0f172a; font-size: 24px; border-bottom: 4px solid #10b981; padding-bottom: 10px; margin-bottom: 30px; }
+                h2 { color: #334155; font-size: 18px; margin-top: 40px; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 0.05em; }
+                table { width: 100%; border-collapse: collapse; margin-bottom: 30px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+                th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #e2e8f0; font-size: 12px; }
+                th { background-color: #f8fafc; color: #64748b; font-weight: 700; text-transform: uppercase; font-size: 10px; }
+                tr:nth-child(even) { background-color: #fcfcfc; }
+                .winrate { font-weight: 700; color: #059669; }
+                .meta { color: #64748b; font-size: 12px; margin-bottom: 20px; }
+            </style></head><body>`;
+
+            html += `<h1>JA1 Court Manager Session Summary</h1>`;
+            html += `<div class="meta">Date: ${exportDate} | Time: ${exportTime} | Matches: ${matchHistory.length}</div>`;
+
+            html += `<h2>Player Leaderboard & Efficiency</h2><table><thead><tr><th>Name</th><th>Status</th><th>Games</th><th>Wins</th><th>Winrate</th><th>Idle</th><th>Active</th><th>In</th><th>Out</th></tr></thead><tbody>`;
+            completeRoster.sort((a,b) => getWinRate(b) - getWinRate(a)).forEach(p => {
+                html += `<tr><td><b>${p.name}</b></td><td>${p.status}</td><td>${p.games}</td><td>${p.wins}</td><td class="winrate">${getWinRate(p)}%</td><td>${getIdleDurationMin(p)}m</td><td>${getVenueDurationMin(p)}m</td><td>${p.checkInTime}</td><td>${p.checkOutTime}</td></tr>`;
+            });
+            html += `</tbody></table>`;
+
+            html += `<h2>Average Wait Times</h2><table><thead><tr><th>Player Name</th><th>Total Games</th><th>Avg Minutes Waiting Per Match</th></tr></thead><tbody>`;
+            waitAverages.forEach(w => html += `<tr><td>${w.name}</td><td>${w.count}</td><td>${w.avg} min</td></tr>`);
+            html += `</tbody></table>`;
+
+            html += `<h2>Full Match Log</h2><table><thead><tr><th>Time</th><th>Court</th><th>Matchup</th><th>Winner</th><th>Dur</th><th>Player Waits</th></tr></thead><tbody>`;
+            matchHistory.forEach(h => {
+                html += `<tr><td>${h.timestamp}</td><td>${h.court}</td><td>${h.team1} vs ${h.team2}</td><td>${h.winner}</td><td>${h.duration}m</td><td style="font-size: 9px; color: #64748b;">${h.playerWaits}</td></tr>`;
+            });
+            html += `</tbody></table></body></html>`;
+
+            printWindow.document.write(html);
+            printWindow.document.close();
+            setTimeout(() => printWindow.print(), 500);
+        }
+    }
+
+    // --- LIFE-CYCLE INIT ---
+    loadFromStorage().then(() => {
+        applyThemeClasses();
+        renderSystem();
+    });
+
+    // Fixed logic: Pause automatic court re-renders while any court is in "Edit Mode"
+    setInterval(() => {
+        const isAnyEditing = courts.some(c => c.isEditing);
+        if (!isAnyEditing) {
+            renderCourts();
+        }
+        renderCheckedOutPlayers();
+    }, 1000);
+
+    setInterval(renderRoster, 1000);
+
+    // Register Service Worker for Offline Mode
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('sw.js')
+                .then(reg => console.log('Service Worker registered', reg))
+                .catch(err => console.log('Service Worker registration failed', err));
+        });
+    }
+</script>
+</body>
+</html>
