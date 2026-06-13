@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JA1 Court Manager</title>
+    <!-- iOS PWA Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="JA1 Court">
+    <link rel="apple-touch-icon" href="logo.jpg">
+
+    <script src="vendor/tailwind.min.js"></script>
+    <script src="vendor/dexie.js"></script>
+    <link href="vendor/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght=400;600;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; transition: background-color 0.3s ease, color 0.3s ease; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+        .win-gradient { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+        @media print { .no-print { display: none; } }
+        /* Custom Export Modal Style */
+        #export-modal { backdrop-filter: blur(4px); }
+        /* Smooth Button Clicks */
+        button:active { transform: scale(0.96); opacity: 0.9; }
+        button { transition: all 0.1s ease; }
+    </style>
+</head>
+<body class="antialiased pb-20 bg-slate-900 text-slate-100 dark-mode">
+
+<div id="guide-modal" class="fixed inset-0 z-[130] hidden flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-3xl max-w-lg w-full shadow-2xl overflow-hidden flex flex-col max-h-[80vh]">
+        <div class="p-6 border-b border-slate-800 flex justify-between items-center text-center relative">
+            <h3 class="text-xl font-bold text-white w-full">App Guidelines</h3>
+            <button onclick="closeGuide()" class="text-slate-400 hover:text-white absolute right-6"><i class="fas fa-times text-xl"></i></button>
+        </div>
+        <div class="p-6 overflow-y-auto custom-scrollbar space-y-6 text-sm text-slate-300">
+            <div>
+                <h4 class="text-emerald-500 font-bold uppercase text-[10px] mb-2 tracking-widest">1. Matchmaking Modes</h4>
+                <div class="space-y-2">
+                    <p>• <b>Default (FIFO)</b>: Strictly follows arrival order (longest wait first). Ensures newcomers (0 games) play first and strictly avoids immediate 4-player repeat lineups by swapping players if needed.</p>
+                    <p>• <b>FairQ ON</b>: Matches players based on skill level. It takes the longest-waiting player (Anchor) and finds 3 others in the queue with the closest skill ratings.</p>
+                    <p>• <b>GMT ON</b>: Prioritizes competitive matchups. Pairs Top 1 & 2 vs Top 3 & 4.</p>
+                    <p>• <b>RT ON</b>: Uses skill levels defined by dots. Pairs Advance with Beginner vs Advance with Beginner (Rank 1 & 4 vs Rank 2 & 3).</p>
+                    <p class="ml-4">• 1 Dot: Beginner (2.0)</p>
+                    <p class="ml-4">• 2 Dots: Novice (3.0)</p>
+                    <p class="ml-4">• 3 Dots: Intermediate (3.5)</p>
+                    <p class="ml-4">• 4 Dots: Advanced (4.5)</p>
+                </div>
+            </div>
+            <div>
+                <h4 class="text-emerald-500 font-bold uppercase text-[10px] mb-2 tracking-widest">2. Player Management</h4>
+                <div class="space-y-3">
+                    <p>• <b>Profiles</b>: Tap any player in the roster to view all-time vs session stats, change photos, or update skill ratings.</p>
+                    <p>• <b>Idle Mode</b>: Tap the <i class="fas fa-coffee mx-1 text-amber-500"></i> icon to pause a player's wait time without checking them out. Perfect for breaks.</p>
+                    <p>• <b>Check-In</b>: New players are added via the top bar. You can search the Global DB to pull existing players into a new session.</p>
+                </div>
+            </div>
+
+            <div>
+                <h4 class="text-emerald-500 font-bold uppercase text-[10px] mb-2 tracking-widest">3. Court Operations</h4>
+                <div class="space-y-3">
+                    <p>• <b>Staging</b>: Matches are first created in the "Up Next Deck". This allows you to review and <b>Shuffle</b> or <b>Edit</b> lineups before they go live.</p>
+                    <p>• <b>Auto-Fill</b>: By default, you must explicitly confirm a staged match to a court. Toggle "Locked/Unlocked" to manage staging capacity.</p>
+                    <p>• <b>Live Edits</b>: Need to swap a player mid-game? Use "Change / Auto Replace" on any occupied court.</p>
+                </div>
+            </div>
+
+            <div>
+                <h4 class="text-emerald-500 font-bold uppercase text-[10px] mb-2 tracking-widest">4. Session & Data</h4>
+                <div class="space-y-3">
+                    <p>• <b>Export</b>: "Export Summary" generates a professional CSV or PDF containing leaderboards, wait time analysis, and full match logs.</p>
+                    <p>• <b>Reset</b>: Use "RESET SYSTEM" only at the end of a major event. It clears local session data but preserves the Global Player Database.</p>
+                    <p>• <b>Sync</b>: The app works 100% offline. Data syncs to the global cloud automatically when a connection is detected.</p>
+                </div>
+            </div>
+            <div>
+                <h4 class="text-emerald-500 font-bold uppercase text-[10px] mb-2 tracking-widest">5. iOS Installation</h4>
+                <div class="space-y-3">
+                    <p>• <b>Add to Home Screen</b>: Open this link in <b>Safari</b>, tap the <b>Share</b> icon (square with arrow), and select <b>"Add to Home Screen"</b> for a full-screen app experience.</p>
+                    <p>• <b>Offline Use</b>: Once added, the app works entirely offline. All data is saved locally to your device.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
